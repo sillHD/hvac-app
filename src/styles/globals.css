@@ -24,3 +24,10 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* make form fields black text and borders by default */
+form input,
+form textarea,
+form select {
+  @apply border-black text-black;
+}

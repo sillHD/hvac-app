@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 
 export function useAuth() {
-  const [user, setUser] = useState(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [user, setUser] = useState<any>(null); // using any to keep flexible, caller can cast to proper shape
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

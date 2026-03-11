@@ -21,6 +21,7 @@ export interface Customer {
   name: string;
   phone: string;
   email: string;
+  addresses?: string[]; // service addresses associated with the customer
 }
 
 // invoice log records created when billing occurs
@@ -33,6 +34,16 @@ export interface InvoiceLog {
   provider?: 'quickbooks' | 'manual';
   notes?: string;
 }
+
+export type JobStatus =
+  | 'draft'
+  | 'submitted'
+  | 'processing'
+  | 'invoice_created'
+  | 'completed'
+  | 'paid'
+  | 'cancelled'
+  | 'error';
 
 // full job model capturing all required fields
 export interface Job {
@@ -50,5 +61,6 @@ export interface Job {
   technicianName: string;
   completedAt: string; // ISO date/time
   photos?: string[]; // urls or base64
-  status: 'pending' | 'completed' | 'invoiced' | 'paid' | 'cancelled';
+  status: JobStatus;
+  logs?: string[]; // operational notes, not sensitive
 }

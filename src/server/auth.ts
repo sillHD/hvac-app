@@ -7,10 +7,13 @@ export interface User {
 }
 
 // in-memory user store for prototyping; replace with a real database later
+
 const users: Array<{ id: string; email: string; password: string; role: User['role'] }> = [
+  // copy mockUsers but add passwords for login
   { id: '1', email: 'root@hvac.local', password: 'rootpass', role: 'root' },
-  { id: '2', email: 'tech@hvac.local', password: 'techpass', role: 'technician' },
-  { id: '3', email: 'admin@hvac.local', password: 'adminpass', role: 'admin' },
+  { id: '2', email: 'alice@hvac-example.com', password: 'alicepass', role: 'technician' },
+  { id: '3', email: 'bob@hvac-example.com', password: 'bobpass', role: 'technician' },
+  { id: '4', email: 'carol@hvac-example.com', password: 'carolpass', role: 'admin' },
 ];
 
 export function verifyToken(token: string): User | null {

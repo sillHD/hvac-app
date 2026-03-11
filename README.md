@@ -71,12 +71,22 @@ Each folder has a clear responsibility: frontend pages and components live under
 ### Login UI and modular AI architecture
 
 #### Credenciales de prueba
-Para facilitar el desarrollo hay algunos usuarios "hardeados" en el servidor
-(prototipo). Puedes iniciar sesión con cualquiera de ellos:
+Manejamos datos ficticios cargados en memoria.
+Usuarios disponibles (login con contraseña listada):
 
 - **root@hvac.local / rootpass** (rol `root`)
-- **admin@hvac.local / adminpass** (rol `admin`)
-- **tech@hvac.local / techpass** (rol `technician`)
+- **alice@hvac-example.com / alicepass** (rol `technician`)
+- **bob@hvac-example.com / bobpass** (rol `technician`)
+- **carol@hvac-example.com / carolpass** (rol `admin`)
+
+Además definimos en `src/lib/mocks.ts`:
+
+- `mockCustomers` con nombres, teléfonos, emails y **lista de direcciones** falsas (se usan para rellenar el formulario de trabajos)
+- `mockJobs` que incluyen dos trabajos de ejemplo, logs sanitizados y estados
+
+Todos los datos son claramente inventados y no contienen información
+sensible ni credenciales reales.
+
 
 La autenticación devuelve un token simulado (`user:<id>`) que se almacena en
 `localStorage`. En producción deberías usar cookies HttpOnly y una base de
@@ -87,7 +97,7 @@ Los tipos compartidos se encuentran en `src/lib/types/index.ts`. Se definieron
 las siguientes interfaces para representar el dominio:
 
 - `User` – representa un usuario técnico, administrador o root con permisos.
-- `Customer` – información básica del cliente (nombre, teléfono, email).
+- `Customer` – información básica del cliente (nombre, teléfono, email) y direcciones asociadas.
 - `Job` – detalle completo de un trabajo, incluyendo cliente, dirección,
   descripción de factura, precio, depósitos, materiales, fotos y estatus.
 - `InvoiceLog` – registro de facturación asociado a un trabajo, útil para
@@ -96,6 +106,25 @@ las siguientes interfaces para representar el dominio:
 La estructura está pensada para escalar: al cambiar la persistencia sólo se
 modifica la capa de servicios/backend, el frontend consume estos tipos sin
 conocer detalles de implementación.
+
+### Capa de servicios (solo servidor)
+
+El directorio `src/server/services` agrupa los conectores a sistemas externos
+o a la base de datos. Cada subcarpeta exporta una API pública limitada y toma
+credenciales de `process.env`; nada de estas librerías se importa en el código
+que se ejecuta en el navegador.  Las carpetas actuales son:
+
+- `gemini` – llamadas a la API de Gemini / AI (mock por el momento).
+- `quickbooks` – helpers para crear/fetch invoices y clientes.
+- `jobs` – capa de persistencia para reportes (hoy en memoria, mañana SQL).
+
+Este patrón facilita:
+
+1. mantener secretos fuera del bundle del frontend,
+2. esconder detalles del proveedor detrás de funciones del dominio,
+3. reemplazar implementaciones (p. ej. cambiar Gemini por OpenAI) sin
+   tocar el resto de la aplicación.
+
 
 ### Security & Privacy Recommendations
 

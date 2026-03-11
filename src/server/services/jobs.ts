@@ -1,14 +1,5 @@
-import { Job } from '../../lib/types';
+// Temporary compatibility layer.  The real implementation now lives in
+// `services/jobs/index.ts`.  This file re-exports the same functions so that
+// existing imports continue working while we gradually migrate or refactor.
 
-// in-memory store for demonstration
-const jobStore: Job[] = [];
-
-export async function createReport(report: Job) {
-  // TODO: persist report to database
-  jobStore.push(report);
-}
-
-export async function listReports(userId: string) {
-  // TODO: query database for reports by technician/user
-  return jobStore.filter((j) => j.technicianName === userId);
-}
+export { createReport, listReports, getReport } from './jobs/index';

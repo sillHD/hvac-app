@@ -1,6 +1,9 @@
-// Abstraction layer for AI providers.  The frontend never imports this module directly;
-// API routes or backend services will talk to it.  This lets us swap out Gemini
-// for OpenAI (or any other) without touching UI code.
+// Abstraction layer for AI providers.  The frontend must not import this
+// module directly; API routes or other server code call `callAI` and receive a
+// consistent result regardless of the underlying provider.  This layer is
+// useful when switching from Gemini to OpenAI (or any other service).
+
+import { generateText as geminiGenerate } from './gemini';
 
 export interface AIRequest {
   prompt: string;
@@ -11,22 +14,19 @@ export interface AIResponse {
   text: string;
 }
 
-// concrete implementations live in separate files or can be chosen dynamically
 export async function callAI(req: AIRequest): Promise<AIResponse> {
-  // placeholder dispatch; in production resolve based on config/env
   if (process.env.AI_PROVIDER === 'openai') {
+    // future-proof: if trackable, import OpenAI provider here
     return callOpenAI(req);
-  } else {
-    return callGemini(req);
   }
+
+  // default to Gemini
+  return geminiGenerate({ prompt: req.prompt, maxTokens: req.maxTokens });
 }
 
-async function callGemini(req: AIRequest): Promise<AIResponse> {
-  // TODO: use Gemini SDK with server-side key (process.env.GEMINI_KEY)
-  return { text: 'respuesta de Gemini (simulada)' };
-}
-
+// stub-only OpenAI path (kept here so switching is just env var change)
 async function callOpenAI(req: AIRequest): Promise<AIResponse> {
-  // TODO: use OpenAI client with server-side key (process.env.OPENAI_KEY)
-  return { text: 'respuesta de OpenAI (simulada)' };
+  // TODO: implement using OpenAI SDK with process.env.OPENAI_KEY
+  console.log('[aiProvider] callOpenAI placeholder');
+  return { text: '<<openai mock response>>' };
 }
