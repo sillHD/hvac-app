@@ -62,11 +62,65 @@ Each folder has a clear responsibility: frontend pages and components live under
 
 - **public/** – assets served directly by Next.js. No sensitive info.
 - **src/pages/** – page components; routing is file-based. Under `pages/api` are API routes executed on the server. Only minimal input from the client should be accepted here.
-- **src/components/** – presentational UI pieces reused across pages.
+- **src/components/** – presentational UI pieces reused across pages. Includes layout components (`Header`, `Layout`, `Protected` guard) that enforce mobile‑first navigation and role‑based visibility.
 - **src/styles/** – Tailwind configuration and global CSS.
 - **src/lib/** – utility functions, shared types, constants used by both front and back.
 - **src/server/** – backend-only implementation (database access, external APIs, business logic).  This code never runs in the browser.
 - **src/client/** – client-side only code (custom hooks, contexts, form state, etc.).
+
+### Login UI and modular AI architecture
+
+#### Credenciales de prueba
+Para facilitar el desarrollo hay algunos usuarios "hardeados" en el servidor
+(prototipo). Puedes iniciar sesión con cualquiera de ellos:
+
+- **root@hvac.local / rootpass** (rol `root`)
+- **admin@hvac.local / adminpass** (rol `admin`)
+- **tech@hvac.local / techpass** (rol `technician`)
+
+La autenticación devuelve un token simulado (`user:<id>`) que se almacena en
+`localStorage`. En producción deberías usar cookies HttpOnly y una base de
+datos real.
+
+#### Modelos de datos
+Los tipos compartidos se encuentran en `src/lib/types/index.ts`. Se definieron
+las siguientes interfaces para representar el dominio:
+
+- `User` – representa un usuario técnico, administrador o root con permisos.
+- `Customer` – información básica del cliente (nombre, teléfono, email).
+- `Job` – detalle completo de un trabajo, incluyendo cliente, dirección,
+  descripción de factura, precio, depósitos, materiales, fotos y estatus.
+- `InvoiceLog` – registro de facturación asociado a un trabajo, útil para
+  integrar más adelante con QuickBooks o Gemini.
+
+La estructura está pensada para escalar: al cambiar la persistencia sólo se
+modifica la capa de servicios/backend, el frontend consume estos tipos sin
+conocer detalles de implementación.
+
+### Security & Privacy Recommendations
+
+The login screen is implemented in `src/components/LoginForm.tsx` and the
+page in `src/pages/login.tsx`.  It's a mobile‑first, Tailwind‑styled form with
+email/password and error handling.  No credentials are stored locally: the
+component simply posts to `/api/auth/login` and waits for the server to set a
+secure cookie or session.  The UI never assumes authentication; the `Header`
+and `Protected` guard control access to content.  Error messages shown to the
+user are generic to avoid leaking system details.
+
+The architecture separates concerns so that future work (Gemini → OpenAI) is
+invisible to the frontend.  The server contains an `aiProvider` service with a
+simple interface (`AIRequest`/`AIResponse`).  API routes or backend logic call
+`callAI()`, and the implementation is chosen at runtime based on configuration
+(e.g. `process.env.AI_PROVIDER`).
+
+Thus:
+
+1. UI does **not** import any Gemini/OpenAI SDKs.
+2. The provider switch happens entirely on the server side.
+3. Frontend remains lean and unaffected by future provider changes.
+
+This pattern can be duplicated for other external integrations (QuickBooks,
+etc.), ensuring that the app is modular, testable, and secure.
 
 ### Security & Privacy Recommendations
 
