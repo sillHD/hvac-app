@@ -117,6 +117,14 @@ que se ejecuta en el navegador.  Las carpetas actuales son:
 - `gemini` – llamadas a la API de Gemini / AI (mock por el momento).
 - `quickbooks` – helpers para crear/fetch invoices y clientes.
 - `jobs` – capa de persistencia para reportes (hoy en memoria, mañana SQL).
+- `googleForm` – (antiguo) traducción de nuestros datos de trabajo a los campos
+  exactos del formulario de Google heredado; aún existe para compatibilidad
+  pero la app ya puede escribir directamente en la hoja.
+- `googleSheets` – nueva capa que agrega una fila al spreadsheet usando la
+  API de Google Sheets.  Reemplaza al envío vía formulario y mantiene el
+  orden de columnas requerido por el flujo actual.  Requiere que el proyecto de
+  Google Cloud tenga la Sheets API habilitada y una **API key** o credenciales
+  de cuenta de servicio configuradas en el servidor.
 
 Este patrón facilita:
 
