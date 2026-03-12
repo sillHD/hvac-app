@@ -22,15 +22,16 @@ export async function appendToSheet(data: GoogleFormInternal): Promise<void> {
   const sheetId =
     process.env.GOOGLE_SHEET_ID ||
     '1DmolGV9JMK146i9g-F8DW31w-xL0JqwZ0z0h73SGyp4';
-  const apiKey =
-    process.env.GOOGLE_SHEETS_API_KEY ||
-    'AIzaSyA4ppDPgOJsonzoG_snR2VpiMjRbmRXPCs';
+  // require the API key be provided via environment; no hard‑coded
+  // defaults here to avoid accidentally committing real keys.  In tests
+  // you can still stub this value by setting the variable directly.
+  const apiKey = process.env.GOOGLE_SHEETS_API_KEY;
   if (!sheetId || !apiKey) {
     throw new Error('Google Sheets ID or API key not configured');
   }
   if (!process.env.GOOGLE_SHEET_ID || !process.env.GOOGLE_SHEETS_API_KEY) {
     console.warn(
-      '[googleSheets] using embedded default ID/key - set env vars instead!'
+      '[googleSheets] missing env vars for sheet ID/key; please configure'
     );
   }
 
