@@ -120,11 +120,37 @@ que se ejecuta en el navegador.  Las carpetas actuales son:
 - `googleForm` – (antiguo) traducción de nuestros datos de trabajo a los campos
   exactos del formulario de Google heredado; aún existe para compatibilidad
   pero la app ya puede escribir directamente en la hoja.
+
+### Clientes guardados
+Los clientes con nombre, teléfono, correo y lista de direcciones se mantienen
+en memoria (`src/lib/mocks.ts`) y se exponen como opciones en el formulario de
+trabajo. Seleccionar un cliente rellena automáticamente el nombre, correo,
+telefono y muestra sus direcciones disponibles para escoger; también se guarda
+una dirección nueva si se introduce manualmente. Los nuevos clientes se
+agregan dinámicamente al conjunto y aparecen en el desplegable para futuros
+reportes durante esa sesión.  Esta solución facilita la introducción de
+cliente recurrentes con múltiples propiedades sin tener que reescribir sus
+datos cada vez.
 - `googleSheets` – nueva capa que agrega una fila al spreadsheet usando la
   API de Google Sheets.  Reemplaza al envío vía formulario y mantiene el
   orden de columnas requerido por el flujo actual.  Requiere que el proyecto de
   Google Cloud tenga la Sheets API habilitada y una **API key** o credenciales
-  de cuenta de servicio configuradas en el servidor.
+  de cuenta de servicio configuradas en el servidor.  En la práctica la
+  aplicación intenta primero leer el JSON de la cuenta de servicio desde la
+  variable `GOOGLE_SERVICE_ACCOUNT_KEY` (puede ser el contenido JSON o una
+  ruta a un archivo); si la variable no existe buscará automáticamente
+  `./keys/service-account.json` y usará ese fichero.  Por ello conviene crear
+  una carpeta `keys` ignorada por Git y dejar allí la credencial descargada.
+  La clave de API es sólo un fallback de prueba y la llamada fallará con 401
+  si se usa en producción.
+
+  **Nota sobre historial:** si `GOOGLE_SHEET_ID` está definido el servicio
+  de jobs escribirá cada nuevo reporte directamente en la hoja y, al leer la
+  lista de reportes, intentará cargarlos desde allí también.  De este modo la
+  hoja se convierte en la "base de datos" para el historial de trabajos.  No
+  se requiere ninguna migración especial: basta con fijar la variable de
+  entorno y reiniciar el servidor.  Las filas existentes en memoria funcionan
+  como respaldo si la lectura de la hoja falla.
 
 Este patrón facilita:
 

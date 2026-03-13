@@ -53,7 +53,7 @@ export interface Job {
   serviceType: string;
   title: string;
   invoiceDescription: string;
-  price: number;
+  price: number | null;
   paymentTerms: string;
   depositTaken: boolean;
   depositAmount?: number;

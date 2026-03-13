@@ -35,28 +35,13 @@ export default function JobForm({ onSuccess }: JobFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // customers + selection state
-  const [customers] = useState<Customer[]>(mockCustomers);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(''); // '' means new
+  const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(''); // '' means new customer
   const [addressOptions, setAddressOptions] = useState<string[]>([]);
   const [addingAddress, setAddingAddress] = useState(false);
 
-  // technicians list (statically defined for now)
-  const technicians = ['Diego', 'Ángel'];
-  const serviceTypes = ['Install', 'Repair', 'Maintenance', 'Diagnóstico'];
-
-  // when the user toggles the customer select we need to update job state
-  const handleSelectCustomer = (customerId: string) => {
-    setSelectedCustomerId(customerId);
-  };
-
-  const handleAddressSelect = (val: string) => {
-    if (val === '__other__') {
-      setAddingAddress(true);
-      setJob((j) => ({ ...j, serviceAddress: '' }));
-    } else {
-      setAddingAddress(false);
-      setJob((j) => ({ ...j, serviceAddress: val }));
-    }
+  const handleSelectCustomer = (id: string) => {
+    setSelectedCustomerId(id);
   };
 
   useEffect(() => {
@@ -71,17 +56,23 @@ export default function JobForm({ onSuccess }: JobFormProps) {
         setAddressOptions(cust.addresses || []);
       }
     } else {
-      // new customer
       setJob((j) => ({
         ...j,
         customer: { name: '', phone: '', email: '' },
-        serviceAddress: '',
       }));
       setAddressOptions([]);
       setAddingAddress(false);
     }
   }, [selectedCustomerId, customers]);
 
+  // technicians list (statically defined for now)
+  const technicians = ['Diego', 'Ángel'];
+  const serviceTypes = ['Install', 'Repair', 'Maintenance', 'Diagnóstico'];
+
+
+
+
+  // validation including email and service address logic
   const jobSchema = z.object({
     customer: z.object({
       name: z.string().nonempty('Required'),
@@ -90,19 +81,13 @@ export default function JobForm({ onSuccess }: JobFormProps) {
     }),
     serviceAddress: z.string().nonempty('Required'),
     serviceType: z.enum(['Install','Repair','Maintenance','Diagnóstico'] as const),
-    title: z.string().nonempty('Required'),
     invoiceDescription: z.string()
-      .min(10, 'Must be at least 10 characters')
+      .min(1, 'Required')
       .nonempty('Required'),
     price: z.number().gt(0, 'Must be greater than 0'),
-    paymentTerms: z.string().nonempty('Required'),
     depositTaken: z.boolean(),
     depositAmount: z.number().nonnegative('Invalid'),
-    materialsUsed: z.array(z.string()).optional(),
     technicianName: z.string().nonempty('Required'),
-    completedAt: z.string().nonempty('Required'),
-    photos: z.array(z.string()).optional(),
-    status: z.string(),
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -142,7 +127,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCustomerChange = (field: string, value: any) => {
-    if (selectedCustomerId) return; // lock while existing customer selected
+    if (selectedCustomerId) return; // don't allow editing when selecting existing
     setJob((j) => ({
       ...j,
       customer: { ...j.customer, [field]: value },
@@ -150,16 +135,32 @@ export default function JobForm({ onSuccess }: JobFormProps) {
   };
 
   const handleSubmit = async (e: FormEvent) => {
-    // if user was adding a new address, commit it to job before validation
-    if (addingAddress) {
-      setJob((j) => ({ ...j, serviceAddress: j.serviceAddress }));
-    }
     e.preventDefault();
     const err = validate();
     setErrors(err);
     if (Object.keys(err).length > 0) return;
     setSubmitting(true);
     try {
+      // if new customer, add to options
+      if (!selectedCustomerId) {
+        const newCust: Customer = {
+          id: `c${Date.now()}`,
+          name: job.customer.name,
+          phone: job.customer.phone,
+          email: job.customer.email,
+          addresses: job.serviceAddress ? [job.serviceAddress] : [],
+        };
+        setCustomers((c) => [...c, newCust]);
+        // also mutate global mock so other components see it
+        mockCustomers.push(newCust);
+      } else {
+        // if existing but new address provided, push to that customer
+        const cust = customers.find((c) => c.id === selectedCustomerId);
+        if (cust && job.serviceAddress && !cust.addresses?.includes(job.serviceAddress)) {
+          cust.addresses = [...(cust.addresses || []), job.serviceAddress];
+        }
+      }
+
       const res = await fetch('/api/reports/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -174,6 +175,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
           body: JSON.stringify({
             technician: job.technicianName,
             customerName: job.customer.name,
+            customerEmail: job.customer.email,
             customerPhone: job.customer.phone,
             serviceAddress: job.serviceAddress,
             workType: job.serviceType,
@@ -199,29 +201,54 @@ export default function JobForm({ onSuccess }: JobFormProps) {
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-      {/* Customer section */}
+      {/* choose existing customer or new */}
       <fieldset className="border p-4 rounded">
         <legend className="font-semibold">Cliente</legend>
         <div className="grid gap-4">
-          {/* choose existing or new */}
           <div>
-            <label className="block text-sm font-medium text-zinc-700">Cliente registrado</label>
+            <label className="block text-sm font-medium text-slate-900">Cliente registrado</label>
             <select
               value={selectedCustomerId}
-              onChange={(e) => handleSelectCustomer(e.target.value)}
+              onChange={(e) => setSelectedCustomerId(e.target.value)}
               className="mt-1 block w-full border rounded p-2"
             >
               <option value="">-- Nuevo cliente --</option>
               {customers.map((c) => (
-                <option key={c.id} value={c.id || ''}>
+                <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
               ))}
             </select>
           </div>
+        </div>
+      </fieldset>
 
+      {/* simplified customer section */}
+      <fieldset className="border border-slate-300 bg-slate-50 p-4 rounded">
+        <legend className="font-semibold text-slate-800">Técnico</legend>
+        <div>
+          <select
+            value={job.technicianName}
+            onChange={(e) => handleChange('technicianName', e.target.value)}
+            className="mt-1 block w-full border rounded p-2"
+          >
+            <option value="">-- seleccione --</option>
+            {technicians.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+          {errors.technicianName && <p className="text-red-600 text-sm">{errors.technicianName}</p>}
+        </div>
+      </fieldset>
+
+      {/* simplified customer section */}
+      <fieldset className="border p-4 rounded">
+        <legend className="font-semibold">Cliente</legend>
+        <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-700">Nombre</label>
+            <label className="block text-sm font-medium text-slate-900">Nombre</label>
             <input
               type="text"
               value={job.customer.name}
@@ -232,18 +259,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
             {errors['customer.name'] && <p className="text-red-600 text-sm">{errors['customer.name']}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-700">Teléfono</label>
-            <input
-              type="tel"
-              value={job.customer.phone}
-              onChange={(e) => handleCustomerChange('phone', e.target.value)}
-              readOnly={!!selectedCustomerId}
-              className="mt-1 block w-full border rounded p-2"
-            />
-            {errors['customer.phone'] && <p className="text-red-600 text-sm">{errors['customer.phone']}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-700">Email</label>
+            <label className="block text-sm font-medium text-slate-900">Email</label>
             <input
               type="email"
               value={job.customer.email}
@@ -253,27 +269,45 @@ export default function JobForm({ onSuccess }: JobFormProps) {
             />
             {errors['customer.email'] && <p className="text-red-600 text-sm">{errors['customer.email']}</p>}
           </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-900">Teléfono</label>
+            <input
+              type="tel"
+              value={job.customer.phone}
+              onChange={(e) => handleCustomerChange('phone', e.target.value)}
+              readOnly={!!selectedCustomerId}
+              className="mt-1 block w-full border rounded p-2"
+            />
+            {errors['customer.phone'] && <p className="text-red-600 text-sm">{errors['customer.phone']}</p>}
+          </div>
         </div>
       </fieldset>
 
       {/* Service details */}
-      <fieldset className="border p-4 rounded">
-        <legend className="font-semibold">Detalles del trabajo</legend>
+      <fieldset className="border border-slate-300 bg-slate-50 p-4 rounded">
+        <legend className="font-semibold text-slate-800">Detalles del trabajo</legend>
         <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-700">Dirección del servicio</label>
+            <label className="block text-sm font-medium text-slate-900">Dirección</label>
             {addressOptions.length > 0 ? (
               <>
                 <select
                   value={addingAddress ? '__other__' : job.serviceAddress}
-                  onChange={(e) => handleAddressSelect(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '__other__') {
+                      setAddingAddress(true);
+                      setJob((j) => ({ ...j, serviceAddress: '' }));
+                    } else {
+                      setAddingAddress(false);
+                      setJob((j) => ({ ...j, serviceAddress: val }));
+                    }
+                  }}
                   className="mt-1 block w-full border rounded p-2"
                 >
                   <option value="">-- seleccione --</option>
                   {addressOptions.map((a) => (
-                    <option key={a} value={a}>
-                      {a}
-                    </option>
+                    <option key={a} value={a}>{a}</option>
                   ))}
                   <option value="__other__">Otro</option>
                 </select>
@@ -298,7 +332,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
             {errors.serviceAddress && <p className="text-red-600 text-sm">{errors.serviceAddress}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-700">Tipo de servicio</label>
+            <label className="block text-sm font-medium text-slate-900">Tipo de trabajo</label>
             <select
               value={job.serviceType}
               onChange={(e) => handleChange('serviceType', e.target.value)}
@@ -314,17 +348,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
             {errors.serviceType && <p className="text-red-600 text-sm">{errors.serviceType}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-700">Título del trabajo</label>
-            <input
-              type="text"
-              value={job.title}
-              onChange={(e) => handleChange('title', e.target.value)}
-              className="mt-1 block w-full border rounded p-2"
-            />
-            {errors.title && <p className="text-red-600 text-sm">{errors.title}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-700">Descripción para factura</label>
+            <label className="block text-sm font-medium text-slate-900">Descripción del trabajo</label>
             <textarea
               value={job.invoiceDescription}
               onChange={(e) => handleChange('invoiceDescription', e.target.value)}
@@ -340,25 +364,18 @@ export default function JobForm({ onSuccess }: JobFormProps) {
         <legend className="font-semibold">Finanzas</legend>
         <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-700">Precio del trabajo</label>
+            <label className="block text-sm font-medium text-slate-900">Precio</label>
             <input
               type="number"
               min="0"
-              value={job.price}
-              onChange={(e) => handleChange('price', parseFloat(e.target.value))}
+              value={job.price ?? ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                handleChange('price', value === '' ? null : parseFloat(value));
+              }}
               className="mt-1 block w-full border rounded p-2"
             />
             {errors.price && <p className="text-red-600 text-sm">{errors.price}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-700">Términos de pago</label>
-            <input
-              type="text"
-              value={job.paymentTerms}
-              onChange={(e) => handleChange('paymentTerms', e.target.value)}
-              className="mt-1 block w-full border rounded p-2"
-            />
-            {errors.paymentTerms && <p className="text-red-600 text-sm">{errors.paymentTerms}</p>}
           </div>
           <div className="flex items-center">
             <input
@@ -374,7 +391,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
           </div>
           {job.depositTaken && (
             <div>
-              <label className="block text-sm font-medium text-zinc-700">Monto del depósito</label>
+              <label className="block text-sm font-medium text-slate-900">Cantidad del depósito</label>
               <input
                 type="number"
                 min="0"
@@ -388,65 +405,11 @@ export default function JobForm({ onSuccess }: JobFormProps) {
         </div>
       </fieldset>
 
-      {/* Misc */}
-      <fieldset className="border p-4 rounded">
-        <legend className="font-semibold">Otros</legend>
-        <div className="grid gap-4">
-          <div>
-            <label className="block text-sm font-medium text-zinc-700">Materiales usados (separados por comas)</label>
-            <input
-              type="text"
-              value={job.materialsUsed?.join(',') || ''}
-              onChange={(e) =>
-                handleChange('materialsUsed', e.target.value.split(',').map((s) => s.trim()))
-              }
-              className="mt-1 block w-full border rounded p-2"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-700">Técnico</label>
-            <select
-              value={job.technicianName}
-              onChange={(e) => handleChange('technicianName', e.target.value)}
-              className="mt-1 block w-full border rounded p-2"
-            >
-              <option value="">-- seleccione --</option>
-              {technicians.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-            {errors.technicianName && <p className="text-red-600 text-sm">{errors.technicianName}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-700">Fecha completado</label>
-            <input
-              type="date"
-              value={job.completedAt}
-              onChange={(e) => handleChange('completedAt', e.target.value)}
-              className="mt-1 block w-full border rounded p-2"
-            />
-            {errors.completedAt && <p className="text-red-600 text-sm">{errors.completedAt}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-700">Fotos (URL, opcional)</label>
-            <input
-              type="text"
-              value={job.photos?.join(',') || ''}
-              onChange={(e) =>
-                handleChange('photos', e.target.value.split(',').map((s) => s.trim()))
-              }
-              className="mt-1 block w-full border rounded p-2"
-            />
-          </div>
-        </div>
-      </fieldset>
 
       <button
         type="submit"
         disabled={submitting}
-        className="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50"
+        className="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded disabled:opacity-50 transition"
       >
         {submitting ? 'Guardando...' : 'Enviar reporte'}
       </button>

@@ -40,6 +40,7 @@ export default function GoogleSheetsExample() {
           const sample: GoogleFormInternal = {
             technician: 'Diego',
             customerName: 'Acme Co',
+            customerEmail: 'contact@acme.example',
             customerPhone: '555-1234',
             serviceAddress: '123 Elm St',
             workType: 'Repair',

@@ -42,14 +42,14 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-xs mx-auto">
+    <form onSubmit={handleSubmit} className="w-full max-w-xs mx-auto bg-white p-6 rounded-lg shadow-md">
       {error && (
         <div className="mb-4 text-red-600 text-sm" role="alert">
           {error}
         </div>
       )}
       <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+        <label className="block text-slate-900 text-sm font-bold mb-2" htmlFor="email">
           Email
         </label>
         <input
@@ -62,7 +62,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         />
       </div>
       <div className="mb-6">
-        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+        <label className="block text-slate-900 text-sm font-bold mb-2" htmlFor="password">
           Contraseña
         </label>
         <input
@@ -71,14 +71,14 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          className="shadow appearance-none border border-slate-300 rounded w-full py-2 px-3 text-slate-900 leading-tight focus:outline-none focus:shadow-outline focus:border-indigo-500 transition"
         />
       </div>
       <div className="flex items-center justify-between">
         <button
           type="submit"
           disabled={loading}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition"
         >
           {loading ? 'Ingresando...' : 'Iniciar sesión'}
         </button>

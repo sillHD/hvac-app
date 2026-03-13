@@ -14,8 +14,8 @@ export default function DashboardPage() {
 
   return (
     <Protected>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Panel de control</h1>
+      <div className="space-y-6 p-4 bg-slate-50 rounded">
+        <h1 className="text-3xl font-bold text-slate-800">Panel de control</h1>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <DashboardCard

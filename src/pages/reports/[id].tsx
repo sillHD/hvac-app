@@ -52,7 +52,9 @@ export default function ReportDetailPage() {
 
         <section className="border p-4 rounded">
           <h2 className="font-semibold mb-2">Finanzas</h2>
-          <p className="text-black">Precio: ${job.price.toFixed(2)}</p>
+          <p className="text-black">
+            Precio: ${typeof job.price === 'number' && !isNaN(job.price) ? job.price.toFixed(2) : '0.00'}
+          </p>
           <p className="text-black">Términos: {job.paymentTerms}</p>
           <p className="text-black">
             Depósito tomado: {job.depositTaken ? 'Sí' : 'No'}

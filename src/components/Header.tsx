@@ -23,9 +23,9 @@ export default function Header({ user, loading }: HeaderProps) {
   const adminLinks = [{ href: '/logs', label: 'Logs' }];
 
   return (
-    <header className="bg-white shadow">
+    <header className="bg-slate-800 shadow-lg">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="text-xl font-semibold">
+        <Link href="/" className="text-xl font-semibold text-white">
           HVAC App
         </Link>
 
@@ -61,7 +61,7 @@ export default function Header({ user, loading }: HeaderProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="block mt-2 sm:mt-0 sm:ml-4 text-gray-700 hover:text-blue-600"
+                  className="block mt-2 sm:mt-0 sm:ml-4 text-slate-200 hover:text-indigo-300 transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -71,14 +71,14 @@ export default function Header({ user, loading }: HeaderProps) {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="block mt-2 sm:mt-0 sm:ml-4 text-gray-700 hover:text-blue-600"
+                    className="block mt-2 sm:mt-0 sm:ml-4 text-slate-200 hover:text-indigo-300 transition-colors"
                   >
                     {link.label}
                   </Link>
                 ))}
               <Link
                 href="/api/auth/logout"
-                className="block mt-2 sm:mt-0 sm:ml-4 text-red-600 hover:text-red-800"
+                className="block mt-2 sm:mt-0 sm:ml-4 text-red-400 hover:text-red-600 transition-colors"
               >
                 Salir
               </Link>
@@ -86,7 +86,7 @@ export default function Header({ user, loading }: HeaderProps) {
           ) : (
             <Link
               href="/login"
-              className="block mt-2 sm:mt-0 sm:ml-4 text-blue-600 hover:text-blue-800"
+              className="block mt-2 sm:mt-0 sm:ml-4 text-indigo-300 hover:text-indigo-200 transition-colors"
             >
               Iniciar sesión
             </Link>

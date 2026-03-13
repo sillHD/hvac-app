@@ -5,6 +5,7 @@
 export interface GoogleFormInternal {
   technician: string;
   customerName: string;
+  customerEmail?: string; // optional for legacy form
   customerPhone: string;
   serviceAddress: string;
   workType: string;
@@ -17,6 +18,7 @@ export interface GoogleFormInternal {
 export type GoogleFormFieldName =
   | 'Technician'
   | 'Customer Name'
+  | 'Customer Email'
   | 'Customer Phone'
   | 'Service Address'
   | 'Work Type'
@@ -31,6 +33,7 @@ export function mapToGoogleFormFields(
   return {
     Technician: data.technician,
     'Customer Name': data.customerName,
+    'Customer Email': data.customerEmail || '',
     'Customer Phone': data.customerPhone,
     'Service Address': data.serviceAddress,
     'Work Type': data.workType,

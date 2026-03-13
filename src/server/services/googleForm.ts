@@ -23,6 +23,7 @@ import {
 const ENTRY_ID_MAP: Record<GoogleFormFieldName, string> = {
   Technician: process.env.GF_TECHNICIAN_ENTRY || 'entry.XXXX',
   'Customer Name': process.env.GF_CUSTOMER_NAME_ENTRY || 'entry.YYYY',
+  'Customer Email': process.env.GF_CUSTOMER_EMAIL_ENTRY || 'entry.EMAIL',
   'Customer Phone': process.env.GF_CUSTOMER_PHONE_ENTRY || 'entry.ZZZZ',
   'Service Address': process.env.GF_SERVICE_ADDRESS_ENTRY || 'entry.AAAA',
   'Work Type': process.env.GF_WORK_TYPE_ENTRY || 'entry.BBBB',

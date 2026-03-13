@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
+/* base palette variables; the colors defined in tailwind.config.js
+   provide more utility classes, but we also expose a few CSS variables for
+   custom rules. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc; /* slate-50 */
+  --foreground: #1e293b; /* slate-800 */
 }
 
 @theme inline {
@@ -23,11 +26,17 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* make form fields black text and borders by default */
+/* make form fields styled consistently with the slate theme */
 form input,
 form textarea,
 form select {
-  @apply border-black text-black;
+  @apply border-slate-300 text-slate-900 bg-white rounded focus:border-indigo-500 focus:ring-indigo-500 transition;
+}
+
+button {
+  @apply transition;
 }
