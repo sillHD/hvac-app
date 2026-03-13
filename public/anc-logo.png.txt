@@ -1,0 +1,12 @@
+Coloca aquí tu archivo real de logo con este nombre exacto:
+
+anc-logo.png
+
+Ruta esperada:
+public/anc-logo.png
+
+El código ya está configurado para mostrarlo en:
+- Login (arriba de "Acceso técnicos")
+- Header (esquina superior izquierda)
+
+Puedes borrar este archivo .txt después de subir el PNG.

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import { User } from '../lib/types';
 
@@ -16,6 +17,7 @@ export default function Header({ user, loading }: HeaderProps) {
   const commonLinks = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/reports', label: 'Reportar' },
+    { href: '/reports/status', label: 'Estado' },
     { href: '/history', label: 'Historial' },
   ];
 
@@ -23,15 +25,24 @@ export default function Header({ user, loading }: HeaderProps) {
   const adminLinks = [{ href: '/logs', label: 'Logs' }];
 
   return (
-    <header className="bg-slate-800 shadow-lg">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="text-xl font-semibold text-white">
-          HVAC App
+    <header>
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        <Link href="/" className="flex items-center">
+          <span className="block overflow-hidden">
+            <Image
+              src="/anc-logo.jpeg"
+              alt="ANC HVAC"
+              width={220}
+              height={72}
+              className="h-14 sm:h-[4.5rem] w-auto object-cover scale-[1.04]"
+              style={{ clipPath: 'inset(1px 1px 1px 1px)' }}
+            />
+          </span>
         </Link>
 
         <button
           onClick={toggleMenu}
-          className="sm:hidden text-gray-700 focus:outline-none"
+          className="sm:hidden text-white focus:outline-none"
           aria-label="Menu"
         >
           <svg
@@ -53,7 +64,7 @@ export default function Header({ user, loading }: HeaderProps) {
         <nav
           className={`${
             menuOpen ? 'block' : 'hidden'
-          } sm:flex sm:items-center w-full sm:w-auto`}
+          } sm:flex sm:items-center sm:justify-end sm:flex-1 w-full sm:w-auto`}
         >
           {!loading && user ? (
             <>
@@ -61,7 +72,7 @@ export default function Header({ user, loading }: HeaderProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="block mt-2 sm:mt-0 sm:ml-4 text-slate-200 hover:text-indigo-300 transition-colors"
+                  className="block mt-2 sm:mt-0 sm:ml-4 text-zinc-100 hover:text-amber-400 transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -71,14 +82,14 @@ export default function Header({ user, loading }: HeaderProps) {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="block mt-2 sm:mt-0 sm:ml-4 text-slate-200 hover:text-indigo-300 transition-colors"
+                    className="block mt-2 sm:mt-0 sm:ml-4 text-zinc-100 hover:text-amber-400 transition-colors"
                   >
                     {link.label}
                   </Link>
                 ))}
               <Link
                 href="/api/auth/logout"
-                className="block mt-2 sm:mt-0 sm:ml-4 text-red-400 hover:text-red-600 transition-colors"
+                className="block mt-2 sm:mt-0 sm:ml-4 text-zinc-300 hover:text-amber-300 transition-colors"
               >
                 Salir
               </Link>
@@ -86,7 +97,7 @@ export default function Header({ user, loading }: HeaderProps) {
           ) : (
             <Link
               href="/login"
-              className="block mt-2 sm:mt-0 sm:ml-4 text-indigo-300 hover:text-indigo-200 transition-colors"
+              className="block mt-2 sm:mt-0 sm:ml-4 text-amber-300 hover:text-amber-200 transition-colors"
             >
               Iniciar sesión
             </Link>

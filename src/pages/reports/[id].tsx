@@ -32,50 +32,50 @@ export default function ReportDetailPage() {
 
   return (
     <Protected>
-      <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
-        <h1 className="text-2xl font-bold">Detalle del trabajo</h1>
+      <div className="max-w-3xl mx-auto py-8 px-4 space-y-6 premium-section">
+        <h1 className="text-2xl font-bold premium-gradient-text">Detalle del trabajo</h1>
 
-        <section className="border p-4 rounded">
-          <h2 className="font-semibold mb-2">Cliente</h2>
-          <p className="text-black">Nombre: {job.customer.name}</p>
-          <p className="text-black">Teléfono: {job.customer.phone}</p>
-          <p className="text-black">Email: {job.customer.email}</p>
+        <section className="premium-card p-4">
+          <h2 className="font-semibold mb-2 text-amber-300">Cliente</h2>
+          <p className="text-zinc-200">Nombre: {job.customer.name}</p>
+          <p className="text-zinc-200">Teléfono: {job.customer.phone}</p>
+          <p className="text-zinc-200">Email: {job.customer.email}</p>
         </section>
 
-        <section className="border p-4 rounded">
-          <h2 className="font-semibold mb-2">Servicio</h2>
-          <p className="text-black">Dirección: {job.serviceAddress}</p>
-          <p className="text-black">Tipo: {job.serviceType}</p>
-          <p className="text-black">Título: {job.title}</p>
-          <p className="text-black">Descripción factura: {job.invoiceDescription}</p>
+        <section className="premium-card p-4">
+          <h2 className="font-semibold mb-2 text-amber-300">Servicio</h2>
+          <p className="text-zinc-200">Dirección: {job.serviceAddress}</p>
+          <p className="text-zinc-200">Tipo: {job.serviceType}</p>
+          <p className="text-zinc-200">Título: {job.title}</p>
+          <p className="text-zinc-200">Descripción factura: {job.invoiceDescription}</p>
         </section>
 
-        <section className="border p-4 rounded">
-          <h2 className="font-semibold mb-2">Finanzas</h2>
-          <p className="text-black">
+        <section className="premium-card p-4">
+          <h2 className="font-semibold mb-2 text-amber-300">Finanzas</h2>
+          <p className="text-zinc-200">
             Precio: ${typeof job.price === 'number' && !isNaN(job.price) ? job.price.toFixed(2) : '0.00'}
           </p>
-          <p className="text-black">Términos: {job.paymentTerms}</p>
-          <p className="text-black">
+          <p className="text-zinc-200">Términos: {job.paymentTerms}</p>
+          <p className="text-zinc-200">
             Depósito tomado: {job.depositTaken ? 'Sí' : 'No'}
             {job.depositTaken && <> - Monto: ${job.depositAmount}</>}
           </p>
           {job.materialsUsed && job.materialsUsed.length > 0 && (
-            <p className="text-black">Materiales: {job.materialsUsed.join(', ')}</p>
+            <p className="text-zinc-200">Materiales: {job.materialsUsed.join(', ')}</p>
           )}
         </section>
 
-        <section className="border p-4 rounded">
-          <h2 className="font-semibold mb-2">Información adicional</h2>
-          <p className="text-black">Técnico: {job.technicianName}</p>
-          <p className="text-black">Fecha: {new Date(job.completedAt).toLocaleDateString()}</p>
-          <p className="text-black">Estado: {job.status}</p>
+        <section className="premium-card p-4">
+          <h2 className="font-semibold mb-2 text-amber-300">Información adicional</h2>
+          <p className="text-zinc-200">Técnico: {job.technicianName}</p>
+          <p className="text-zinc-200">Fecha: {new Date(job.completedAt).toLocaleDateString()}</p>
+          <p className="text-zinc-200">Estado: {job.status}</p>
         </section>
 
         {job.logs && job.logs.length > 0 && (
-          <section className="border p-4 rounded">
-            <h2 className="font-semibold mb-2">Logs</h2>
-            <ul className="list-disc pl-5 text-black">
+          <section className="premium-card p-4">
+            <h2 className="font-semibold mb-2 text-amber-300">Logs</h2>
+            <ul className="list-disc pl-5 text-zinc-200">
               {job.logs.map((log, idx) => (
                 <li key={idx}>{log}</li>
               ))}

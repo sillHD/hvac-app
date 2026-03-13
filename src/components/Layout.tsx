@@ -10,7 +10,7 @@ export default function Layout({ children }: LayoutProps) {
   const { user, loading } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-[#171717] text-zinc-100">
       <Header user={user} loading={loading} />
       <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-6">
         {/* pages will render here; they can decide to require auth */}

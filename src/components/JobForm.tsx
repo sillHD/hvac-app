@@ -206,7 +206,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
         <legend className="font-semibold">Cliente</legend>
         <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-900">Cliente registrado</label>
+            <label className="block text-sm font-medium text-zinc-100">Cliente registrado</label>
             <select
               value={selectedCustomerId}
               onChange={(e) => setSelectedCustomerId(e.target.value)}
@@ -224,8 +224,8 @@ export default function JobForm({ onSuccess }: JobFormProps) {
       </fieldset>
 
       {/* simplified customer section */}
-      <fieldset className="border border-slate-300 bg-slate-50 p-4 rounded">
-        <legend className="font-semibold text-slate-800">Técnico</legend>
+      <fieldset className="border border-amber-700/40 bg-zinc-900/80 p-4 rounded">
+        <legend className="font-semibold text-amber-300">Técnico</legend>
         <div>
           <select
             value={job.technicianName}
@@ -248,7 +248,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
         <legend className="font-semibold">Cliente</legend>
         <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-900">Nombre</label>
+            <label className="block text-sm font-medium text-zinc-100">Nombre</label>
             <input
               type="text"
               value={job.customer.name}
@@ -259,7 +259,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
             {errors['customer.name'] && <p className="text-red-600 text-sm">{errors['customer.name']}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-900">Email</label>
+            <label className="block text-sm font-medium text-zinc-100">Email</label>
             <input
               type="email"
               value={job.customer.email}
@@ -270,7 +270,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
             {errors['customer.email'] && <p className="text-red-600 text-sm">{errors['customer.email']}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-900">Teléfono</label>
+            <label className="block text-sm font-medium text-zinc-100">Teléfono</label>
             <input
               type="tel"
               value={job.customer.phone}
@@ -284,11 +284,11 @@ export default function JobForm({ onSuccess }: JobFormProps) {
       </fieldset>
 
       {/* Service details */}
-      <fieldset className="border border-slate-300 bg-slate-50 p-4 rounded">
-        <legend className="font-semibold text-slate-800">Detalles del trabajo</legend>
+      <fieldset className="border border-amber-700/40 bg-zinc-900/80 p-4 rounded">
+        <legend className="font-semibold text-amber-300">Detalles del trabajo</legend>
         <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-900">Dirección</label>
+            <label className="block text-sm font-medium text-zinc-100">Dirección</label>
             {addressOptions.length > 0 ? (
               <>
                 <select
@@ -332,7 +332,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
             {errors.serviceAddress && <p className="text-red-600 text-sm">{errors.serviceAddress}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-900">Tipo de trabajo</label>
+            <label className="block text-sm font-medium text-zinc-100">Tipo de trabajo</label>
             <select
               value={job.serviceType}
               onChange={(e) => handleChange('serviceType', e.target.value)}
@@ -348,7 +348,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
             {errors.serviceType && <p className="text-red-600 text-sm">{errors.serviceType}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-900">Descripción del trabajo</label>
+            <label className="block text-sm font-medium text-zinc-100">Descripción del trabajo</label>
             <textarea
               value={job.invoiceDescription}
               onChange={(e) => handleChange('invoiceDescription', e.target.value)}
@@ -364,7 +364,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
         <legend className="font-semibold">Finanzas</legend>
         <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-900">Precio</label>
+            <label className="block text-sm font-medium text-zinc-100">Precio</label>
             <input
               type="number"
               min="0"
@@ -391,7 +391,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
           </div>
           {job.depositTaken && (
             <div>
-              <label className="block text-sm font-medium text-slate-900">Cantidad del depósito</label>
+              <label className="block text-sm font-medium text-zinc-100">Cantidad del depósito</label>
               <input
                 type="number"
                 min="0"
@@ -409,7 +409,7 @@ export default function JobForm({ onSuccess }: JobFormProps) {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-2 rounded disabled:opacity-50 transition"
+        className="w-full btn-primary py-2 disabled:opacity-50"
       >
         {submitting ? 'Guardando...' : 'Enviar reporte'}
       </button>

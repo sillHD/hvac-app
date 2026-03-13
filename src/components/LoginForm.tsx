@@ -42,14 +42,14 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-xs mx-auto bg-white p-6 rounded-lg shadow-md">
+    <form onSubmit={handleSubmit} className="w-full max-w-xs mx-auto premium-card p-6">
       {error && (
-        <div className="mb-4 text-red-600 text-sm" role="alert">
+        <div className="mb-4 text-amber-300 text-sm" role="alert">
           {error}
         </div>
       )}
       <div className="mb-4">
-        <label className="block text-slate-900 text-sm font-bold mb-2" htmlFor="email">
+        <label className="block text-zinc-100 text-sm font-bold mb-2" htmlFor="email">
           Email
         </label>
         <input
@@ -58,11 +58,11 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          className="shadow appearance-none w-full py-2 px-3 leading-tight focus:outline-none"
         />
       </div>
       <div className="mb-6">
-        <label className="block text-slate-900 text-sm font-bold mb-2" htmlFor="password">
+        <label className="block text-zinc-100 text-sm font-bold mb-2" htmlFor="password">
           Contraseña
         </label>
         <input
@@ -71,14 +71,14 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="shadow appearance-none border border-slate-300 rounded w-full py-2 px-3 text-slate-900 leading-tight focus:outline-none focus:shadow-outline focus:border-indigo-500 transition"
+          className="shadow appearance-none w-full py-2 px-3 leading-tight focus:outline-none"
         />
       </div>
       <div className="flex items-center justify-between">
         <button
           type="submit"
           disabled={loading}
-          className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition"
+          className="btn-primary py-2 px-4 focus:outline-none"
         >
           {loading ? 'Ingresando...' : 'Iniciar sesión'}
         </button>
