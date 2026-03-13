@@ -167,25 +167,6 @@ export default function JobForm({ onSuccess }: JobFormProps) {
         body: JSON.stringify(job),
       });
       if (res.ok) {
-        // also send to Google Form mirror (ignored errors since
-        // backend/service will log if it fails but it shouldn't block UI)
-        fetch('/api/submitForm', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            technician: job.technicianName,
-            customerName: job.customer.name,
-            customerEmail: job.customer.email,
-            customerPhone: job.customer.phone,
-            serviceAddress: job.serviceAddress,
-            workType: job.serviceType,
-            workDescription: job.invoiceDescription,
-            jobPrice: job.price,
-            depositTaken: job.depositTaken,
-            depositAmount: job.depositAmount,
-          }),
-        }).catch((e) => console.error('google form submit failed', e));
-
         onSuccess?.();
       } else {
         const data = await res.json().catch(() => ({}));
