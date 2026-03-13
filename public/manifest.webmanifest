@@ -1,0 +1,26 @@
+{
+  "name": "ANC HVAC",
+  "short_name": "ANC HVAC",
+  "description": "Gestion de reportes HVAC para tecnicos",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#171717",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/anc-logo.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/anc-logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
