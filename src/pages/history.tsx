@@ -3,8 +3,10 @@ import Protected from '../components/Protected';
 import { Job } from '../lib/types';
 import { getAuthHeaders } from '../client/lib/authHeaders';
 import { useAuth } from '../client/hooks/useAuth';
+import { useI18n } from '../i18n/I18nProvider';
 
 export default function HistoryPage() {
+  const { t } = useI18n();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -42,7 +44,7 @@ export default function HistoryPage() {
   const paidCount = jobs.filter((job) => job.status === 'paid').length;
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Seguro que deseas eliminar este registro?')) return;
+    if (!confirm(t('history.deleteConfirm'))) return;
     setNotice(null);
     try {
       const res = await fetch(`/api/reports/${id}`, {
@@ -55,16 +57,16 @@ export default function HistoryPage() {
         setNotice({
           type: 'success',
           message: data.deletedFromSheet
-            ? 'Trabajo eliminado y borrado físicamente de Google Sheets.'
-            : 'Trabajo eliminado correctamente.',
+            ? t('history.deletedSheet')
+            : t('history.deleted'),
         });
       } else {
         const data = await res.json().catch(() => ({}));
-        setNotice({ type: 'error', message: data.error || 'No se pudo eliminar el registro.' });
+        setNotice({ type: 'error', message: data.error || t('history.deleteError') });
       }
     } catch (err) {
       console.error('delete failed', err);
-      setNotice({ type: 'error', message: 'Error al eliminar.' });
+      setNotice({ type: 'error', message: t('history.networkDeleteError') });
     }
   };
 
@@ -72,10 +74,10 @@ export default function HistoryPage() {
     <Protected>
       <div className="max-w-4xl mx-auto py-8 px-4 premium-section space-y-6">
         <div className="space-y-3">
-          <span className="page-eyebrow">Archivo operativo</span>
-          <h1 className="text-2xl font-bold premium-gradient-text">Historial de trabajos</h1>
+          <span className="page-eyebrow">{t('history.eyebrow')}</span>
+          <h1 className="text-2xl font-bold premium-gradient-text">{t('history.title')}</h1>
           <p className="page-subtitle">
-            Revisa reportes anteriores, montos registrados y seguimiento operativo en una sola vista.
+            {t('history.subtitle')}
           </p>
         </div>
 
@@ -94,27 +96,27 @@ export default function HistoryPage() {
         {!loading && jobs.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="stat-card">
-              <p className="stat-label">Reportes</p>
+              <p className="stat-label">{t('history.reports')}</p>
               <p className="stat-value">{jobs.length}</p>
-              <p className="stat-note">Trabajos almacenados</p>
+              <p className="stat-note">{t('history.reportsNote')}</p>
             </div>
             <div className="stat-card">
-              <p className="stat-label">Pagados</p>
+              <p className="stat-label">{t('history.paid')}</p>
               <p className="stat-value">{paidCount}</p>
-              <p className="stat-note">Reportes con estado liquidado</p>
+              <p className="stat-note">{t('history.paidNote')}</p>
             </div>
             <div className="stat-card">
-              <p className="stat-label">Valor total</p>
+              <p className="stat-label">{t('history.totalValue')}</p>
               <p className="stat-value">${totalValue.toFixed(0)}</p>
-              <p className="stat-note">Suma provisional de precios</p>
+              <p className="stat-note">{t('history.totalValueNote')}</p>
             </div>
           </div>
         )}
 
         {loading ? (
-          <p className="text-zinc-300">Cargando...</p>
+          <p className="text-zinc-300">{t('ui.loading')}</p>
         ) : jobs.length === 0 ? (
-          <p className="text-zinc-300">No hay trabajos registrados.</p>
+          <p className="text-zinc-300">{t('history.noJobs')}</p>
         ) : (
           <ul className="space-y-4">
             {jobs.map((job) => (
@@ -122,40 +124,40 @@ export default function HistoryPage() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
                   <div>
                     <span className="status-pill mb-3">
-                      {job.status === 'paid' ? 'Pagado' : job.status}
+                      {job.status === 'paid' ? t('history.paidPill') : job.status}
                     </span>
                     <p className="font-semibold text-zinc-100">{job.customer.name}</p>
                     <p className="text-sm text-zinc-300">{job.serviceType} - {job.title}</p>
                   </div>
                   <div className="mt-2 sm:mt-0 text-sm text-zinc-200">
                     <p>
-                      Tipo:{' '}
-                      {job.reportType === 'quote' || job.quoteStatus ? 'Cotizacion' : 'Factura'}
+                      {t('history.type')}:{' '}
+                      {job.reportType === 'quote' || job.quoteStatus ? t('history.quote') : t('history.invoice')}
                     </p>
-                    <p>Téc: {job.technicianName}</p>
+                    <p>{t('history.tech')}: {job.technicianName}</p>
                     <p>{new Date(job.completedAt).toLocaleDateString()}</p>
                     <p>
-                      Precio: ${
+                      {t('history.price')}: ${
                         typeof job.price === 'number' && !isNaN(job.price)
                           ? job.price.toFixed(2)
                           : '0.00'
                       }
                     </p>
-                    <p>Estatus: {job.status}</p>
+                    <p>{t('history.status')}: {job.status}</p>
                     {canManage && (
                       <div className="flex gap-2 mt-3">
                         <a
                           href={`/reports/${job.id}`}
                           className="px-3 py-1 text-xs rounded-full bg-amber-500/15 text-amber-300 hover:bg-amber-500/30 transition-colors"
                         >
-                          Editar
+                          {t('ui.edit')}
                         </a>
                         <button
                           type="button"
                           onClick={() => handleDelete(job.id)}
                           className="px-3 py-1 text-xs rounded-full bg-red-500/15 text-red-400 hover:bg-red-500/30 transition-colors"
                         >
-                          Eliminar
+                          {t('ui.delete')}
                         </button>
                       </div>
                     )}

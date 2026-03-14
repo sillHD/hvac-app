@@ -1,10 +1,12 @@
 import { FormEvent, useState } from 'react';
+import { useI18n } from '../i18n/I18nProvider';
 
 interface LoginFormProps {
   onSuccess?: () => void;
 }
 
 export default function LoginForm({ onSuccess }: LoginFormProps) {
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +31,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error || 'Error en el inicio de sesión');
+        setError(data.error || t('login.error'));
       } else {
         const data = await res.json();
         if (data.token) {
@@ -40,7 +42,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       }
     } catch (err) {
       console.error('Login failed', err);
-      setError('No se pudo conectar al servidor');
+      setError(t('login.serverError'));
     } finally {
       setLoading(false);
     }
@@ -51,7 +53,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
     setRecoveryError(null);
 
     if (!email) {
-      setRecoveryError('Escribe tu correo antes de recuperar la contraseña.');
+      setRecoveryError(t('login.recoverNeedEmail'));
       return;
     }
 
@@ -65,16 +67,16 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setRecoveryError(data.error || 'No se pudo iniciar la recuperacion.');
+        setRecoveryError(data.error || t('login.recoverError'));
         return;
       }
 
       setRecoveryMessage(
-        data.message || 'Si el correo existe en el sistema, recibira instrucciones de recuperacion.'
+        data.message || t('login.recoverMessage')
       );
     } catch (err) {
       console.error('Recovery failed', err);
-      setRecoveryError('No se pudo conectar al servidor para recuperar la contraseña.');
+      setRecoveryError(t('login.recoverServerError'));
     } finally {
       setRecovering(false);
     }
@@ -112,7 +114,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       </div>
       <div className="mb-6">
         <label className="block text-zinc-100 text-sm font-bold mb-2" htmlFor="password">
-          Contraseña
+          {t('login.password')}
         </label>
         <input
           id="password"
@@ -128,7 +130,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           disabled={recovering}
           className="mt-3 text-sm text-amber-300 hover:text-amber-200"
         >
-          {recovering ? 'Recuperando...' : 'Recuperar contraseña'}
+          {recovering ? t('login.recovering') : t('login.recover')}
         </button>
       </div>
       <div className="flex items-center justify-between">
@@ -137,7 +139,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           disabled={loading}
           className="btn-primary py-2 px-4 focus:outline-none"
         >
-          {loading ? 'Ingresando...' : 'Iniciar sesión'}
+          {loading ? t('login.submitting') : t('login.submit')}
         </button>
       </div>
     </form>

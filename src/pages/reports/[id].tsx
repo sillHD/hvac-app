@@ -4,6 +4,7 @@ import Protected from '../../components/Protected';
 import { Job } from '../../lib/types';
 import { getAuthHeaders } from '../../client/lib/authHeaders';
 import { useAuth } from '../../client/hooks/useAuth';
+import { useI18n } from '../../i18n/I18nProvider';
 
 export default function ReportDetailPage() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function ReportDetailPage() {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const { user } = useAuth();
+  const { t } = useI18n();
   const canManage = user?.role === 'admin' || user?.role === 'root';
 
   useEffect(() => {
@@ -35,11 +37,11 @@ export default function ReportDetailPage() {
     load();
   }, [id]);
 
-  if (loading) return <p>Cargando...</p>;
-  if (!job) return <p>Trabajo no encontrado.</p>;
+  if (loading) return <p>{t('ui.loading')}</p>;
+  if (!job) return <p>{t('detail.notFound')}</p>;
 
   const handleDelete = async () => {
-    if (!confirm('¿Seguro que deseas eliminar este registro?')) return;
+    if (!confirm(t('detail.deleteConfirm'))) return;
     setNotice(null);
     try {
       const res = await fetch(`/api/reports/${id}`, {
@@ -51,17 +53,17 @@ export default function ReportDetailPage() {
         sessionStorage.setItem(
           'historyNotice',
           data.deletedFromSheet
-            ? 'Trabajo eliminado y borrado físicamente de Google Sheets.'
-            : 'Trabajo eliminado correctamente.'
+            ? t('detail.deletedSheet')
+            : t('detail.deleted')
         );
         router.replace('/history');
       } else {
         const data = await res.json().catch(() => ({}));
-        setNotice({ type: 'error', message: data.error || 'No se pudo eliminar el registro.' });
+        setNotice({ type: 'error', message: data.error || t('detail.deleteError') });
       }
     } catch (err) {
       console.error(err);
-      setNotice({ type: 'error', message: 'Error al eliminar.' });
+      setNotice({ type: 'error', message: t('detail.deleteNetworkError') });
     }
   };
 
@@ -78,14 +80,14 @@ export default function ReportDetailPage() {
       if (res.ok) {
         const data = await res.json();
         setJob(data.report);
-        setNotice({ type: 'success', message: 'Estado actualizado correctamente.' });
+        setNotice({ type: 'success', message: t('detail.updateOk') });
       } else {
         const data = await res.json().catch(() => ({}));
-        setNotice({ type: 'error', message: data.error || 'No se pudo actualizar el estado.' });
+        setNotice({ type: 'error', message: data.error || t('detail.updateError') });
       }
     } catch (err) {
       console.error(err);
-      setNotice({ type: 'error', message: 'Error al actualizar.' });
+      setNotice({ type: 'error', message: t('detail.updateNetworkError') });
     } finally {
       setSaving(false);
     }
@@ -95,7 +97,7 @@ export default function ReportDetailPage() {
     <Protected>
       <div className="max-w-3xl mx-auto py-8 px-4 space-y-6 premium-section">
         <div className="flex items-start justify-between gap-4 flex-wrap">
-          <h1 className="text-2xl font-bold premium-gradient-text">Detalle del trabajo</h1>
+          <h1 className="text-2xl font-bold premium-gradient-text">{t('detail.title')}</h1>
           {canManage && (
             <div className="flex gap-2">
               <button
@@ -103,7 +105,7 @@ export default function ReportDetailPage() {
                 onClick={handleDelete}
                 className="px-4 py-2 text-sm rounded-full bg-red-500/15 text-red-400 hover:bg-red-500/30 transition-colors"
               >
-                Eliminar
+                {t('ui.delete')}
               </button>
             </div>
           )}
@@ -122,40 +124,40 @@ export default function ReportDetailPage() {
         )}
 
         <section className="premium-card p-4">
-          <h2 className="font-semibold mb-2 text-amber-300">Cliente</h2>
-          <p className="text-zinc-200">Nombre: {job.customer.name}</p>
-          <p className="text-zinc-200">Teléfono: {job.customer.phone}</p>
+          <h2 className="font-semibold mb-2 text-amber-300">{t('detail.customer')}</h2>
+          <p className="text-zinc-200">{t('detail.name')}: {job.customer.name}</p>
+          <p className="text-zinc-200">{t('detail.phone')}: {job.customer.phone}</p>
           <p className="text-zinc-200">Email: {job.customer.email}</p>
         </section>
 
         <section className="premium-card p-4">
-          <h2 className="font-semibold mb-2 text-amber-300">Servicio</h2>
-          <p className="text-zinc-200">Dirección: {job.serviceAddress}</p>
-          <p className="text-zinc-200">Tipo: {job.serviceType}</p>
-          <p className="text-zinc-200">Título: {job.title}</p>
-          <p className="text-zinc-200">Descripción factura: {job.invoiceDescription}</p>
+          <h2 className="font-semibold mb-2 text-amber-300">{t('detail.service')}</h2>
+          <p className="text-zinc-200">{t('detail.address')}: {job.serviceAddress}</p>
+          <p className="text-zinc-200">{t('detail.type')}: {job.serviceType}</p>
+          <p className="text-zinc-200">{t('detail.titleField')}: {job.title}</p>
+          <p className="text-zinc-200">{t('detail.invoiceDescription')}: {job.invoiceDescription}</p>
         </section>
 
         <section className="premium-card p-4">
-          <h2 className="font-semibold mb-2 text-amber-300">Finanzas</h2>
+          <h2 className="font-semibold mb-2 text-amber-300">{t('detail.finance')}</h2>
           <p className="text-zinc-200">
-            Precio: ${typeof job.price === 'number' && !isNaN(job.price) ? job.price.toFixed(2) : '0.00'}
+            {t('detail.price')}: ${typeof job.price === 'number' && !isNaN(job.price) ? job.price.toFixed(2) : '0.00'}
           </p>
-          <p className="text-zinc-200">Términos: {job.paymentTerms}</p>
+          <p className="text-zinc-200">{t('detail.terms')}: {job.paymentTerms}</p>
           <p className="text-zinc-200">
-            Depósito tomado: {job.depositTaken ? 'Sí' : 'No'}
-            {job.depositTaken && <> - Monto: ${job.depositAmount}</>}
+            {t('detail.depositTaken')}: {job.depositTaken ? t('detail.yes') : t('detail.no')}
+            {job.depositTaken && <> - {t('detail.amount')}: ${job.depositAmount}</>}
           </p>
           {job.materialsUsed && job.materialsUsed.length > 0 && (
-            <p className="text-zinc-200">Materiales: {job.materialsUsed.join(', ')}</p>
+            <p className="text-zinc-200">{t('detail.materials')}: {job.materialsUsed.join(', ')}</p>
           )}
         </section>
 
         <section className="premium-card p-4">
-          <h2 className="font-semibold mb-2 text-amber-300">Información adicional</h2>
-          <p className="text-zinc-200">Técnico: {job.technicianName}</p>
-          <p className="text-zinc-200">Fecha: {new Date(job.completedAt).toLocaleDateString()}</p>
-          <p className="text-zinc-200">Estado: {job.status}</p>
+          <h2 className="font-semibold mb-2 text-amber-300">{t('detail.moreInfo')}</h2>
+          <p className="text-zinc-200">{t('detail.tech')}: {job.technicianName}</p>
+          <p className="text-zinc-200">{t('detail.date')}: {new Date(job.completedAt).toLocaleDateString()}</p>
+          <p className="text-zinc-200">{t('detail.status')}: {job.status}</p>
           {canManage && (
             <div className="flex gap-2 mt-3 flex-wrap">
               {job.reportType !== 'quote' ? (
@@ -166,7 +168,7 @@ export default function ReportDetailPage() {
                     onClick={() => handleStatusChange('paid')}
                     className="px-3 py-1 text-xs rounded-full bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition-colors disabled:opacity-40"
                   >
-                    Marcar pagado
+                    {t('detail.markPaid')}
                   </button>
                   <button
                     type="button"
@@ -174,7 +176,7 @@ export default function ReportDetailPage() {
                     onClick={() => handleStatusChange('submitted')}
                     className="px-3 py-1 text-xs rounded-full bg-orange-500/15 text-orange-400 hover:bg-orange-500/30 transition-colors disabled:opacity-40"
                   >
-                    Marcar pendiente
+                    {t('detail.markPending')}
                   </button>
                 </>
               ) : (
@@ -185,7 +187,7 @@ export default function ReportDetailPage() {
                     onClick={() => handleStatusChange('approved')}
                     className="px-3 py-1 text-xs rounded-full bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition-colors disabled:opacity-40"
                   >
-                    Aprobar cotización
+                    {t('detail.approveQuote')}
                   </button>
                   <button
                     type="button"
@@ -193,7 +195,7 @@ export default function ReportDetailPage() {
                     onClick={() => handleStatusChange('pending')}
                     className="px-3 py-1 text-xs rounded-full bg-zinc-500/15 text-zinc-300 hover:bg-zinc-500/30 transition-colors disabled:opacity-40"
                   >
-                    Marcar pendiente
+                    {t('detail.markPending')}
                   </button>
                 </>
               )}
@@ -203,7 +205,7 @@ export default function ReportDetailPage() {
 
         {job.logs && job.logs.length > 0 && (
           <section className="premium-card p-4">
-            <h2 className="font-semibold mb-2 text-amber-300">Logs</h2>
+            <h2 className="font-semibold mb-2 text-amber-300">{t('detail.logs')}</h2>
             <ul className="list-disc pl-5 text-zinc-200">
               {job.logs.map((log, idx) => (
                 <li key={idx}>{log}</li>

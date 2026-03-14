@@ -3,8 +3,10 @@ import Protected from '../components/Protected';
 import { useAuth } from '../client/hooks/useAuth';
 import { getAuthHeaders } from '../client/lib/authHeaders';
 import { canViewLogs } from '../lib/utils/roles';
+import { useI18n } from '../i18n/I18nProvider';
 
 export default function LogsPage() {
+  const { t } = useI18n();
   const { user, loading } = useAuth();
   const [logs, setLogs] = useState<string[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
@@ -35,13 +37,13 @@ export default function LogsPage() {
   }, [user]);
 
   if (loading) {
-    return <p className="text-zinc-300 p-4">Cargando...</p>;
+    return <p className="text-zinc-300 p-4">{t('ui.loading')}</p>;
   }
 
   if (!user || !canViewLogs(user.role)) {
     return (
       <Protected>
-        <div className="premium-card p-4 text-zinc-300">No tienes permisos para ver logs.</div>
+        <div className="premium-card p-4 text-zinc-300">{t('logs.noPermission')}</div>
       </Protected>
     );
   }
@@ -49,13 +51,13 @@ export default function LogsPage() {
   return (
     <Protected>
       <div className="premium-section p-4 space-y-4">
-        <h1 className="text-2xl premium-gradient-text">Logs</h1>
-        <p className="text-zinc-300">Disponible para cuentas con rol admin y root.</p>
+        <h1 className="text-2xl premium-gradient-text">{t('logs.title')}</h1>
+        <p className="text-zinc-300">{t('logs.roleNote')}</p>
 
         {loadingLogs ? (
-          <div className="premium-card p-4 text-zinc-300">Cargando logs...</div>
+          <div className="premium-card p-4 text-zinc-300">{t('logs.loading')}</div>
         ) : logs.length === 0 ? (
-          <div className="premium-card p-4 text-zinc-300">No hay logs disponibles por ahora.</div>
+          <div className="premium-card p-4 text-zinc-300">{t('logs.empty')}</div>
         ) : (
           <ul className="space-y-3">
             {logs.map((log, index) => (

@@ -3,6 +3,7 @@ import Protected from '../../components/Protected';
 import { Job } from '../../lib/types';
 import { getAuthHeaders } from '../../client/lib/authHeaders';
 import { useAuth } from '../../client/hooks/useAuth';
+import { useI18n } from '../../i18n/I18nProvider';
 
 type PaymentState = 'paid' | 'partial' | 'pending';
 type PaymentFilter = 'all' | 'paid' | 'partial' | 'pending';
@@ -35,6 +36,7 @@ function getQuoteState(job: Job): QuoteState {
 
 export default function ReportStatusPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<StatusView>('invoices');
@@ -106,7 +108,7 @@ export default function ReportStatusPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setNotice({ type: 'error', message: data.error || 'No se pudo actualizar la factura.' });
+        setNotice({ type: 'error', message: data.error || t('status.updateInvoiceError') });
         return;
       }
 
@@ -114,7 +116,7 @@ export default function ReportStatusPage() {
       setNotice({ type: 'success', message: successMessage });
     } catch (error) {
       console.error('failed to update invoice status', error);
-      setNotice({ type: 'error', message: 'Error al actualizar el estado de la factura.' });
+      setNotice({ type: 'error', message: t('status.updateInvoiceNetworkError') });
     } finally {
       setUpdatingId(null);
     }
@@ -128,7 +130,7 @@ export default function ReportStatusPage() {
         depositTaken: true,
         depositAmount: typeof job.price === 'number' ? job.price : job.depositAmount,
       },
-      'Factura marcada como pagada.'
+      t('status.markedPaid')
     );
   };
 
@@ -138,12 +140,12 @@ export default function ReportStatusPage() {
     const price = typeof job.price === 'number' ? job.price : 0;
 
     if (!Number.isFinite(amount) || amount <= 0) {
-      setNotice({ type: 'error', message: 'Ingresa un monto válido para el adelanto.' });
+      setNotice({ type: 'error', message: t('status.partialInvalid') });
       return;
     }
 
     if (price <= 0) {
-      setNotice({ type: 'error', message: 'La factura no tiene monto total válido.' });
+      setNotice({ type: 'error', message: t('status.totalInvalid') });
       return;
     }
 
@@ -159,8 +161,8 @@ export default function ReportStatusPage() {
         depositAmount: normalizedAmount,
       },
       remaining === 0
-        ? 'Adelanto completó el total. Factura marcada como pagada.'
-        : `Pago parcial guardado. Saldo pendiente: $${remaining.toFixed(2)}`
+        ? t('status.partialCompleted')
+        : t('status.partialSaved').replace('${amount}', remaining.toFixed(2))
     );
   };
 
@@ -186,10 +188,10 @@ export default function ReportStatusPage() {
     <Protected>
       <div className="max-w-5xl mx-auto py-8 px-4 premium-section space-y-6">
         <div className="space-y-3">
-          <span className="page-eyebrow">Cobros provisionales</span>
-          <h1 className="text-2xl font-bold premium-gradient-text">Estado de reportes</h1>
+          <span className="page-eyebrow">{t('status.eyebrow')}</span>
+          <h1 className="text-2xl font-bold premium-gradient-text">{t('status.title')}</h1>
           <p className="page-subtitle">
-            Visualiza por separado el estado de facturas y el estado de cotizaciones.
+            {t('status.subtitle')}
           </p>
         </div>
 
@@ -199,14 +201,14 @@ export default function ReportStatusPage() {
             onClick={() => setView('invoices')}
             className={`filter-chip ${view === 'invoices' ? 'filter-chip-active' : ''}`}
           >
-            Estado de facturas
+            {t('status.invoicesView')}
           </button>
           <button
             type="button"
             onClick={() => setView('quotes')}
             className={`filter-chip ${view === 'quotes' ? 'filter-chip-active' : ''}`}
           >
-            Estado de cotizaciones
+            {t('status.quotesView')}
           </button>
         </div>
 
@@ -223,40 +225,40 @@ export default function ReportStatusPage() {
         )}
 
         {loading ? (
-          <p className="text-zinc-300">Cargando...</p>
+          <p className="text-zinc-300">{t('ui.loading')}</p>
         ) : view === 'invoices' && invoiceJobs.length === 0 ? (
-          <p className="text-zinc-300">No hay facturas registradas.</p>
+          <p className="text-zinc-300">{t('status.noInvoices')}</p>
         ) : view === 'quotes' && quoteJobs.length === 0 ? (
-          <p className="text-zinc-300">No hay cotizaciones registradas.</p>
+          <p className="text-zinc-300">{t('status.noQuotes')}</p>
         ) : (
           <>
             {view === 'invoices' ? (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   <div className="stat-card">
-                    <p className="stat-label">Pagados</p>
+                    <p className="stat-label">{t('status.paidStat')}</p>
                     <p className="stat-value text-emerald-400">{paidCount}</p>
-                    <p className="stat-note">Reportes con cobro resuelto</p>
+                    <p className="stat-note">{t('status.paidStatNote')}</p>
                   </div>
                   <div className="stat-card">
-                    <p className="stat-label">Pago parcial</p>
+                    <p className="stat-label">{t('status.partialStat')}</p>
                     <p className="stat-value text-sky-300">{partialCount}</p>
-                    <p className="stat-note">Facturas abonadas parcialmente</p>
+                    <p className="stat-note">{t('status.partialStatNote')}</p>
                   </div>
                   <div className="stat-card">
-                    <p className="stat-label">Pendientes</p>
+                    <p className="stat-label">{t('status.pendingStat')}</p>
                     <p className="stat-value text-orange-400">{pendingCount}</p>
-                    <p className="stat-note">Pendientes por confirmar en QuickBooks</p>
+                    <p className="stat-note">{t('status.pendingStatNote')}</p>
                   </div>
                   <div className="stat-card">
-                    <p className="stat-label">Valor total</p>
+                    <p className="stat-label">{t('status.totalValue')}</p>
                     <p className="stat-value">${totalAmount.toFixed(0)}</p>
-                    <p className="stat-note">Valor acumulado de reportes</p>
+                    <p className="stat-note">{t('status.totalValueNoteInvoices')}</p>
                   </div>
                   <div className="stat-card">
-                    <p className="stat-label">Pendiente</p>
+                    <p className="stat-label">{t('status.pendingValue')}</p>
                     <p className="stat-value text-orange-400">${pendingAmount.toFixed(0)}</p>
-                    <p className="stat-note">Monto provisional por cobrar</p>
+                    <p className="stat-note">{t('status.pendingValueNote')}</p>
                   </div>
                 </div>
 
@@ -266,28 +268,28 @@ export default function ReportStatusPage() {
                     onClick={() => setInvoiceFilter('all')}
                     className={`filter-chip ${invoiceFilter === 'all' ? 'filter-chip-active' : ''}`}
                   >
-                    Todos
+                    {t('status.all')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setInvoiceFilter('paid')}
                     className={`filter-chip ${invoiceFilter === 'paid' ? 'filter-chip-active' : ''}`}
                   >
-                    Solo pagados
+                    {t('status.onlyPaid')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setInvoiceFilter('partial')}
                     className={`filter-chip ${invoiceFilter === 'partial' ? 'filter-chip-active' : ''}`}
                   >
-                    Pago parcial
+                    {t('status.partial')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setInvoiceFilter('pending')}
                     className={`filter-chip ${invoiceFilter === 'pending' ? 'filter-chip-active' : ''}`}
                   >
-                    Solo pendientes
+                    {t('status.onlyPending')}
                   </button>
                 </div>
 
@@ -308,11 +310,11 @@ export default function ReportStatusPage() {
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <div className="mb-3 flex flex-wrap items-center gap-2">
-                            <span className="status-pill">{job.serviceType || 'Sin tipo'}</span>
-                            <span className="text-xs uppercase tracking-[0.18em] text-zinc-500">Ref: {job.id}</span>
+                            <span className="status-pill">{job.serviceType || t('status.noType')}</span>
+                            <span className="text-xs uppercase tracking-[0.18em] text-zinc-500">{t('ui.ref')}: {job.id}</span>
                           </div>
                           <p className="font-semibold text-zinc-100">
-                            {job.customer.name || job.title || 'Reporte sin nombre'}
+                            {job.customer.name || job.title || t('status.unnamed')}
                           </p>
                           <p className="text-sm text-zinc-300">{job.serviceAddress}</p>
                         </div>
@@ -328,24 +330,24 @@ export default function ReportStatusPage() {
                               }`}
                             >
                               {paymentState === 'paid'
-                                ? 'Pagado'
+                                ? t('status.paymentPaid')
                                 : paymentState === 'partial'
-                                  ? 'Pagado parcialmente'
-                                  : 'Pendiente por pagar'}
+                                  ? t('status.paymentPartial')
+                                  : t('status.paymentPending')}
                             </span>
                           </p>
-                          <p>Estatus operativo: {job.status}</p>
-                          <p>Téc: {job.technicianName}</p>
+                          <p>{t('status.operational')}: {job.status}</p>
+                          <p>{t('history.tech')}: {job.technicianName}</p>
                           <p>
-                            Monto: ${typeof job.price === 'number' && !isNaN(job.price) ? job.price.toFixed(2) : '0.00'}
+                            {t('status.amount')}: ${typeof job.price === 'number' && !isNaN(job.price) ? job.price.toFixed(2) : '0.00'}
                           </p>
                           {paymentState === 'partial' && (
                             <>
                               <p>
-                                Adelanto: ${((job.depositAmount ?? 0) as number).toFixed(2)}
+                                {t('status.deposit')}: ${((job.depositAmount ?? 0) as number).toFixed(2)}
                               </p>
                               <p>
-                                Debe: ${Math.max((job.price ?? 0) - (job.depositAmount ?? 0), 0).toFixed(2)}
+                                {t('status.due')}: ${Math.max((job.price ?? 0) - (job.depositAmount ?? 0), 0).toFixed(2)}
                               </p>
                             </>
                           )}
@@ -358,7 +360,7 @@ export default function ReportStatusPage() {
                                 onClick={() => markInvoiceAsPaid(job)}
                                 className="px-3 py-1 text-xs rounded-full bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/30 transition-colors disabled:opacity-40"
                               >
-                                Marcar pagada
+                                {t('status.markPaid')}
                               </button>
                               <div className="flex flex-wrap items-center gap-2">
                                 <input
@@ -377,7 +379,7 @@ export default function ReportStatusPage() {
                                       [job.id]: e.target.value,
                                     }))
                                   }
-                                  placeholder="Adelanto $"
+                                  placeholder={t('status.partialPlaceholder')}
                                   className="w-28 rounded-full border border-sky-500/30 bg-black/25 px-3 py-1 text-xs text-sky-100"
                                 />
                                 <button
@@ -386,7 +388,7 @@ export default function ReportStatusPage() {
                                   onClick={() => savePartialPayment(job)}
                                   className="px-3 py-1 text-xs rounded-full bg-sky-500/15 text-sky-300 hover:bg-sky-500/30 transition-colors disabled:opacity-40"
                                 >
-                                  Guardar parcial
+                                  {t('status.savePartial')}
                                 </button>
                               </div>
                             </div>
@@ -401,24 +403,24 @@ export default function ReportStatusPage() {
               <>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   <div className="stat-card">
-                    <p className="stat-label">Aprobadas</p>
+                    <p className="stat-label">{t('status.approvedStat')}</p>
                     <p className="stat-value text-emerald-400">{approvedCount}</p>
-                    <p className="stat-note">Cotizaciones en verde</p>
+                    <p className="stat-note">{t('status.approvedStatNote')}</p>
                   </div>
                   <div className="stat-card">
-                    <p className="stat-label">Pendientes</p>
+                    <p className="stat-label">{t('status.pendingQuotesStat')}</p>
                     <p className="stat-value text-zinc-300">{pendingQuoteCount}</p>
-                    <p className="stat-note">Cotizaciones por confirmar</p>
+                    <p className="stat-note">{t('status.pendingQuotesStatNote')}</p>
                   </div>
                   <div className="stat-card">
-                    <p className="stat-label">Valor total</p>
+                    <p className="stat-label">{t('status.totalValue')}</p>
                     <p className="stat-value">${quoteAmount.toFixed(0)}</p>
-                    <p className="stat-note">Valor acumulado de cotizaciones</p>
+                    <p className="stat-note">{t('status.totalQuotesValueNote')}</p>
                   </div>
                   <div className="stat-card">
-                    <p className="stat-label">Aprobado</p>
+                    <p className="stat-label">{t('status.approvedValue')}</p>
                     <p className="stat-value text-emerald-400">${approvedAmount.toFixed(0)}</p>
-                    <p className="stat-note">Monto potencial confirmado</p>
+                    <p className="stat-note">{t('status.approvedValueNote')}</p>
                   </div>
                 </div>
 
@@ -428,21 +430,21 @@ export default function ReportStatusPage() {
                     onClick={() => setQuoteFilter('all')}
                     className={`filter-chip ${quoteFilter === 'all' ? 'filter-chip-active' : ''}`}
                   >
-                    Todas
+                    {t('status.allF')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setQuoteFilter('approved')}
                     className={`filter-chip ${quoteFilter === 'approved' ? 'filter-chip-active' : ''}`}
                   >
-                    Solo aprobadas
+                    {t('status.onlyApproved')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setQuoteFilter('pending')}
                     className={`filter-chip ${quoteFilter === 'pending' ? 'filter-chip-active' : ''}`}
                   >
-                    Solo pendientes
+                    {t('status.onlyPendingF')}
                   </button>
                 </div>
 
@@ -459,11 +461,11 @@ export default function ReportStatusPage() {
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <div className="mb-3 flex flex-wrap items-center gap-2">
-                            <span className="status-pill">{job.serviceType || 'Sin tipo'}</span>
-                            <span className="text-xs uppercase tracking-[0.18em] text-zinc-500">Ref: {job.id}</span>
+                            <span className="status-pill">{job.serviceType || t('status.noType')}</span>
+                            <span className="text-xs uppercase tracking-[0.18em] text-zinc-500">{t('ui.ref')}: {job.id}</span>
                           </div>
                           <p className="font-semibold text-zinc-100">
-                            {job.customer.name || job.title || 'Reporte sin nombre'}
+                            {job.customer.name || job.title || t('status.unnamed')}
                           </p>
                           <p className="text-sm text-zinc-300">{job.serviceAddress}</p>
                         </div>
@@ -476,13 +478,13 @@ export default function ReportStatusPage() {
                                   : 'bg-zinc-500/15 text-zinc-300 ring-1 ring-zinc-500/40'
                               }`}
                             >
-                              {quoteState === 'approved' ? 'Aprobada' : 'Pendiente'}
+                              {quoteState === 'approved' ? t('status.approved') : t('status.pending')}
                             </span>
                           </p>
-                          <p>Estatus operativo: {job.status}</p>
-                          <p>Téc: {job.technicianName}</p>
+                          <p>{t('status.operational')}: {job.status}</p>
+                          <p>{t('history.tech')}: {job.technicianName}</p>
                           <p>
-                            Monto: ${typeof job.price === 'number' && !isNaN(job.price) ? job.price.toFixed(2) : '0.00'}
+                            {t('status.amount')}: ${typeof job.price === 'number' && !isNaN(job.price) ? job.price.toFixed(2) : '0.00'}
                           </p>
                           <p>{new Date(job.completedAt).toLocaleDateString()}</p>
                         </div>

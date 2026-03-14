@@ -4,6 +4,7 @@ import { Job, Customer } from '../lib/types';
 import { mockCustomers } from '../lib/mocks';
 import { useAuth } from '../client/hooks/useAuth';
 import { getAuthHeaders } from '../client/lib/authHeaders';
+import { useI18n } from '../i18n/I18nProvider';
 
 interface JobFormProps {
   onSuccess?: () => void;
@@ -31,6 +32,7 @@ const emptyJob: Omit<Job, 'id'> = {
 
 export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
   const isQuoteMode = mode === 'quote';
+  const { t } = useI18n();
   const { user } = useAuth();
   const [job, setJob] = useState<Omit<Job, 'id'>>({
     ...emptyJob,
@@ -73,6 +75,13 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
   // technicians list (statically defined for now)
   const technicians = ['Diego', 'Ángel'];
   const serviceTypes = ['Install', 'Repair', 'Maintenance', 'Diagnóstico'];
+  const serviceTypeLabel = (value: string) => {
+    if (value === 'Install') return 'Install';
+    if (value === 'Repair') return 'Repair';
+    if (value === 'Maintenance') return 'Maintenance';
+    if (value === 'Diagnóstico') return t('form.jobType');
+    return value;
+  };
 
 
 
@@ -80,19 +89,19 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
   // validation including email and service address logic
   const jobSchema = z.object({
     customer: z.object({
-      name: z.string().nonempty('Required'),
-      phone: z.string().nonempty('Required'),
-      email: z.string().nonempty('Required').email('Invalid email'),
+      name: z.string().nonempty(t('form.required')),
+      phone: z.string().nonempty(t('form.required')),
+      email: z.string().nonempty(t('form.required')).email(t('form.invalidEmail')),
     }),
-    serviceAddress: z.string().nonempty('Required'),
+    serviceAddress: z.string().nonempty(t('form.required')),
     serviceType: z.enum(['Install','Repair','Maintenance','Diagnóstico'] as const),
     invoiceDescription: z.string()
-      .min(1, 'Required')
-      .nonempty('Required'),
-    price: z.number().gt(0, 'Must be greater than 0'),
+      .min(1, t('form.required'))
+      .nonempty(t('form.required')),
+    price: z.number().gt(0, t('form.invalidAmount')),
     depositTaken: z.boolean(),
-    depositAmount: z.number().nonnegative('Invalid'),
-    technicianName: z.string().nonempty('Required'),
+    depositAmount: z.number().nonnegative(t('form.invalidDeposit')),
+    technicianName: z.string().nonempty(t('form.required')),
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -119,7 +128,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
         'message' in e &&
         (e as { message?: unknown }).message === 'depositAmount'
       ) {
-        formatted.depositAmount = 'Must be > 0 when deposit taken';
+        formatted.depositAmount = t('form.depositRule');
       }
       return formatted;
     }
@@ -185,11 +194,11 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
         onSuccess?.();
       } else {
         const data = await res.json().catch(() => ({}));
-        alert(data.error || 'Error submitting job');
+        alert(data.error || t('form.submitError'));
       }
     } catch (err) {
       console.error(err);
-      alert('Network error');
+      alert(t('form.networkError'));
     } finally {
       setSubmitting(false);
     }
@@ -198,30 +207,30 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
   return (
     <form className="space-y-8" onSubmit={handleSubmit}>
       <div className="space-y-3">
-        <span className="page-eyebrow">{isQuoteMode ? 'Nueva cotizacion' : 'Nueva factura'}</span>
+        <span className="page-eyebrow">{isQuoteMode ? t('form.eyebrowQuote') : t('form.eyebrowInvoice')}</span>
         <div className="space-y-2">
           <h2 className="text-2xl font-bold premium-gradient-text">
-            {isQuoteMode ? 'Registrar cotizacion' : 'Registrar factura'}
+            {isQuoteMode ? t('form.titleQuote') : t('form.titleInvoice')}
           </h2>
           <p className="page-subtitle">
-            Captura cliente, direccion, descripcion y datos de cobro en un flujo corto pensado para movil.
+            {t('form.subtitle')}
           </p>
         </div>
       </div>
 
       {/* choose existing customer or new */}
       <fieldset className="panel-fieldset">
-        <legend className="font-semibold text-amber-300">Cliente</legend>
+        <legend className="font-semibold text-amber-300">{t('form.customer')}</legend>
         <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-100">Cliente registrado</label>
-            <p className="field-note mt-1">Selecciona un cliente existente o deja vacio para registrar uno nuevo.</p>
+            <label className="block text-sm font-medium text-zinc-100">{t('form.registeredCustomer')}</label>
+            <p className="field-note mt-1">{t('form.customerHelp')}</p>
             <select
               value={selectedCustomerId}
               onChange={(e) => setSelectedCustomerId(e.target.value)}
               className="mt-1 block w-full border rounded p-2"
             >
-              <option value="">-- Nuevo cliente --</option>
+              <option value="">{t('form.newCustomerOption')}</option>
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -234,15 +243,15 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
 
       {/* simplified customer section */}
       <fieldset className="panel-fieldset">
-        <legend className="font-semibold text-amber-300">Técnico</legend>
+        <legend className="font-semibold text-amber-300">{t('form.technician')}</legend>
         <div>
-          <p className="field-note mb-2">Asigna el trabajo al tecnico responsable antes de enviarlo.</p>
+          <p className="field-note mb-2">{t('form.technicianHelp')}</p>
           <select
             value={job.technicianName}
             onChange={(e) => handleChange('technicianName', e.target.value)}
             className="mt-1 block w-full border rounded p-2"
           >
-            <option value="">-- seleccione --</option>
+            <option value="">{t('form.selectOption')}</option>
             {technicians.map((t) => (
               <option key={t} value={t}>
                 {t}
@@ -255,10 +264,10 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
 
       {/* simplified customer section */}
       <fieldset className="panel-fieldset">
-        <legend className="font-semibold text-amber-300">Datos del cliente</legend>
+        <legend className="font-semibold text-amber-300">{t('form.customerData')}</legend>
         <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-100">Nombre</label>
+            <label className="block text-sm font-medium text-zinc-100">{t('form.name')}</label>
             <input
               type="text"
               value={job.customer.name}
@@ -280,7 +289,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
             {errors['customer.email'] && <p className="text-red-600 text-sm">{errors['customer.email']}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-100">Teléfono</label>
+            <label className="block text-sm font-medium text-zinc-100">{t('form.phone')}</label>
             <input
               type="tel"
               value={job.customer.phone}
@@ -295,11 +304,11 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
 
       {/* Service details */}
       <fieldset className="panel-fieldset">
-        <legend className="font-semibold text-amber-300">Detalles del trabajo</legend>
+        <legend className="font-semibold text-amber-300">{t('form.jobDetails')}</legend>
         <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-100">Dirección</label>
-            <p className="field-note mt-1">La direccion debe ser asi: Direccion, Ciudad</p>
+            <label className="block text-sm font-medium text-zinc-100">{t('form.address')}</label>
+            <p className="field-note mt-1">{t('form.addressHelp')}</p>
             {addressOptions.length > 0 ? (
               <>
                 <select
@@ -316,18 +325,18 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
                   }}
                   className="mt-1 block w-full border rounded p-2"
                 >
-                  <option value="">-- seleccione --</option>
+                  <option value="">{t('form.selectOption')}</option>
                   {addressOptions.map((a) => (
                     <option key={a} value={a}>{a}</option>
                   ))}
-                  <option value="__other__">Otro</option>
+                  <option value="__other__">{t('form.other')}</option>
                 </select>
                 {addingAddress && (
                   <input
                     type="text"
                     value={job.serviceAddress}
                     onChange={(e) => handleChange('serviceAddress', e.target.value)}
-                    placeholder="Escriba nueva dirección"
+                    placeholder={t('form.newAddressPlaceholder')}
                     className="mt-1 block w-full border rounded p-2"
                   />
                 )}
@@ -343,23 +352,23 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
             {errors.serviceAddress && <p className="text-red-600 text-sm">{errors.serviceAddress}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-100">Tipo de trabajo</label>
+            <label className="block text-sm font-medium text-zinc-100">{t('form.jobType')}</label>
             <select
               value={job.serviceType}
               onChange={(e) => handleChange('serviceType', e.target.value)}
               className="mt-1 block w-full border rounded p-2"
             >
-              <option value="">-- seleccione --</option>
+              <option value="">{t('form.selectOption')}</option>
               {serviceTypes.map((t) => (
                 <option key={t} value={t}>
-                  {t}
+                  {serviceTypeLabel(t)}
                 </option>
               ))}
             </select>
             {errors.serviceType && <p className="text-red-600 text-sm">{errors.serviceType}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-100">Descripción del trabajo</label>
+            <label className="block text-sm font-medium text-zinc-100">{t('form.jobDescription')}</label>
             <textarea
               value={job.invoiceDescription}
               onChange={(e) => handleChange('invoiceDescription', e.target.value)}
@@ -372,11 +381,11 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
 
       {/* Financial */}
       <fieldset className="panel-fieldset">
-        <legend className="font-semibold text-amber-300">Finanzas</legend>
+        <legend className="font-semibold text-amber-300">{t('form.finance')}</legend>
         <div className="grid gap-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-100">Precio</label>
-            <p className="field-note mt-1">Usa el valor total acordado. El estado de pago se podra sincronizar despues con QuickBooks.</p>
+            <label className="block text-sm font-medium text-zinc-100">{t('form.price')}</label>
+            <p className="field-note mt-1">{t('form.priceHelp')}</p>
             <input
               type="number"
               min="0"
@@ -400,12 +409,12 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
                   className="mr-2"
                 />
                 <label htmlFor="depositTaken" className="text-sm text-zinc-100">
-                  Depósito tomado
+                  {t('form.depositTaken')}
                 </label>
               </div>
               {job.depositTaken && (
                 <div>
-                  <label className="block text-sm font-medium text-zinc-100">Cantidad del depósito</label>
+                  <label className="block text-sm font-medium text-zinc-100">{t('form.depositAmount')}</label>
                   <input
                     type="number"
                     min="0"
@@ -420,14 +429,14 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
           )}
           {isQuoteMode && (
             <div>
-              <label className="block text-sm font-medium text-zinc-100">Estado de la cotización</label>
+              <label className="block text-sm font-medium text-zinc-100">{t('status.quotesView')}</label>
               <select
                 value={job.quoteStatus || 'pending'}
                 onChange={(e) => handleChange('quoteStatus', e.target.value)}
                 className="mt-1 block w-full border rounded p-2"
               >
-                <option value="pending">Pendiente</option>
-                <option value="approved">Aprobada</option>
+                <option value="pending">{t('status.pending')}</option>
+                <option value="approved">{t('status.approved')}</option>
               </select>
             </div>
           )}
@@ -440,7 +449,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
         disabled={submitting}
         className="w-full btn-primary py-3 disabled:opacity-50 shadow-[0_12px_28px_rgba(202,155,42,0.18)]"
       >
-        {submitting ? 'Guardando...' : isQuoteMode ? 'Guardar cotizacion' : 'Guardar factura'}
+        {submitting ? t('form.submitting') : isQuoteMode ? t('form.submitQuote') : t('form.submitInvoice')}
       </button>
     </form>
   );

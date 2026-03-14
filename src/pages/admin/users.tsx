@@ -2,6 +2,7 @@ import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import Protected from '../../components/Protected';
 import { getAuthHeaders } from '../../client/lib/authHeaders';
 import { useAuth } from '../../client/hooks/useAuth';
+import { useI18n } from '../../i18n/I18nProvider';
 
 type Role = 'technician' | 'admin' | 'root';
 type AssignableRole = 'technician' | 'admin';
@@ -15,6 +16,7 @@ interface ManagedUser {
 
 export default function AdminUsersPage() {
   const { user, loading } = useAuth();
+  const { t } = useI18n();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [fetching, setFetching] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,7 +41,7 @@ export default function AdminUsersPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || 'No se pudieron cargar los usuarios.');
+        setError(data.error || t('admin.loadError'));
         return;
       }
       const fetchedUsers = (data.users || []) as ManagedUser[];
@@ -53,11 +55,11 @@ export default function AdminUsersPage() {
       setRoleDrafts(nextDrafts);
     } catch (err) {
       console.error(err);
-      setError('Error de red al consultar usuarios.');
+      setError(t('admin.loadNetworkError'));
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!loading && user?.role === 'root') {
@@ -77,14 +79,14 @@ export default function AdminUsersPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || 'No se pudo crear el usuario.');
+        setError(data.error || t('admin.createError'));
         return;
       }
       setCreateForm({ email: '', password: '', role: 'technician' });
       setUsers((prev) => [...prev, data.user]);
     } catch (err) {
       console.error(err);
-      setError('Error de red al crear usuario.');
+      setError(t('admin.createNetworkError'));
     } finally {
       setSaving(false);
     }
@@ -101,7 +103,7 @@ export default function AdminUsersPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || 'No se pudo actualizar el usuario.');
+        setError(data.error || t('admin.updateError'));
         return;
       }
       const updated = data.user as ManagedUser;
@@ -114,14 +116,14 @@ export default function AdminUsersPage() {
       }
     } catch (err) {
       console.error(err);
-      setError('Error de red al actualizar usuario.');
+      setError(t('admin.updateNetworkError'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Seguro que deseas borrar este usuario?')) return;
+    if (!confirm(t('admin.deleteConfirm'))) return;
     setSaving(true);
     setError(null);
     try {
@@ -131,32 +133,32 @@ export default function AdminUsersPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || 'No se pudo borrar el usuario.');
+        setError(data.error || t('admin.deleteError'));
         return;
       }
       setUsers((prev) => prev.filter((u) => u.id !== id));
     } catch (err) {
       console.error(err);
-      setError('Error de red al borrar usuario.');
+      setError(t('admin.deleteNetworkError'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleChangePassword = async (id: string) => {
-    const newPassword = prompt('Nueva contraseña para el usuario:');
+    const newPassword = prompt(t('admin.newPasswordPrompt'));
     if (!newPassword) return;
     await patchUser(id, { password: newPassword });
   };
 
   if (loading) {
-    return <p className="text-zinc-300 p-4">Cargando...</p>;
+    return <p className="text-zinc-300 p-4">{t('ui.loading')}</p>;
   }
 
   if (!user || user.role !== 'root') {
     return (
       <Protected>
-        <div className="premium-card p-4 text-zinc-300">Solo Root puede administrar usuarios.</div>
+        <div className="premium-card p-4 text-zinc-300">{t('admin.onlyRoot')}</div>
       </Protected>
     );
   }
@@ -165,9 +167,9 @@ export default function AdminUsersPage() {
     <Protected>
       <div className="max-w-5xl mx-auto py-8 px-4 premium-section space-y-6">
         <div className="space-y-2">
-          <span className="page-eyebrow">Administración Root</span>
-          <h1 className="text-2xl font-bold premium-gradient-text">Gestión de usuarios</h1>
-          <p className="page-subtitle">Crea usuarios, bloquea temporalmente, elimina cuentas y cambia claves.</p>
+          <span className="page-eyebrow">{t('admin.eyebrow')}</span>
+          <h1 className="text-2xl font-bold premium-gradient-text">{t('admin.title')}</h1>
+          <p className="page-subtitle">{t('admin.subtitle')}</p>
         </div>
 
         {error && <p className="text-red-400 text-sm">{error}</p>}
@@ -175,7 +177,7 @@ export default function AdminUsersPage() {
         <form onSubmit={handleCreate} className="premium-card p-4 grid gap-3 sm:grid-cols-4">
           <input
             type="email"
-            placeholder="Correo"
+            placeholder={t('admin.emailPlaceholder')}
             value={createForm.email}
             onChange={(e) => setCreateForm((prev) => ({ ...prev, email: e.target.value }))}
             className="sm:col-span-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-zinc-100"
@@ -183,7 +185,7 @@ export default function AdminUsersPage() {
           />
           <input
             type="text"
-            placeholder="Contraseña"
+            placeholder={t('admin.passwordPlaceholder')}
             value={createForm.password}
             onChange={(e) => setCreateForm((prev) => ({ ...prev, password: e.target.value }))}
             className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-zinc-100"
@@ -204,22 +206,22 @@ export default function AdminUsersPage() {
             disabled={saving}
             className="sm:col-span-4 rounded-full bg-amber-500/20 text-amber-300 px-4 py-2 hover:bg-amber-500/35 transition-colors disabled:opacity-50"
           >
-            Crear usuario
+            {t('admin.createUser')}
           </button>
         </form>
 
         <div className="space-y-3">
           {fetching ? (
-            <p className="text-zinc-300">Cargando usuarios...</p>
+            <p className="text-zinc-300">{t('admin.loadingUsers')}</p>
           ) : users.length === 0 ? (
-            <p className="text-zinc-300">No hay usuarios disponibles.</p>
+            <p className="text-zinc-300">{t('admin.noUsers')}</p>
           ) : (
             users.map((managedUser) => (
               <div key={managedUser.id} className="premium-card p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-zinc-100 font-semibold">{managedUser.email}</p>
                   <p className="text-sm text-zinc-300">
-                    Rol: {managedUser.role} · Estado: {managedUser.disabled ? 'Bloqueado' : 'Activo'}
+                    {t('admin.role')}: {managedUser.role} · {t('admin.state')}: {managedUser.disabled ? t('admin.blocked') : t('admin.active')}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -229,7 +231,7 @@ export default function AdminUsersPage() {
                     onClick={() => patchUser(managedUser.id, { disabled: !managedUser.disabled })}
                     className="px-3 py-1 text-xs rounded-full bg-zinc-500/20 text-zinc-200 hover:bg-zinc-500/35 disabled:opacity-40"
                   >
-                    {managedUser.disabled ? 'Desbloquear' : 'Bloquear'}
+                    {managedUser.disabled ? t('admin.unblock') : t('admin.block')}
                   </button>
                   <button
                     type="button"
@@ -237,11 +239,11 @@ export default function AdminUsersPage() {
                     onClick={() => handleChangePassword(managedUser.id)}
                     className="px-3 py-1 text-xs rounded-full bg-amber-500/20 text-amber-300 hover:bg-amber-500/35 disabled:opacity-40"
                   >
-                    Cambiar clave
+                    {t('admin.changePassword')}
                   </button>
                   {managedUser.role === 'root' ? (
                     <span className="px-3 py-1 text-xs rounded-full bg-zinc-700/30 text-zinc-300">
-                      Rol fijo: root
+                      {t('admin.fixedRoleRoot')}
                     </span>
                   ) : (
                     <>
@@ -264,7 +266,7 @@ export default function AdminUsersPage() {
                         onClick={() => patchUser(managedUser.id, { role: roleDrafts[managedUser.id] || 'technician' })}
                         className="px-3 py-1 text-xs rounded-full bg-blue-500/20 text-blue-300 hover:bg-blue-500/35 disabled:opacity-40"
                       >
-                        Guardar rol
+                        {t('admin.saveRole')}
                       </button>
                     </>
                   )}
@@ -274,7 +276,7 @@ export default function AdminUsersPage() {
                     onClick={() => handleDelete(managedUser.id)}
                     className="px-3 py-1 text-xs rounded-full bg-red-500/20 text-red-300 hover:bg-red-500/35 disabled:opacity-40"
                   >
-                    Borrar
+                    {t('admin.delete')}
                   </button>
                 </div>
               </div>
