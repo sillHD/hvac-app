@@ -68,7 +68,12 @@ function mapRowsToReports(rows: string[][], fallbackType: 'invoice' | 'quote'): 
   let header = rows[0] || [];
   let dataRows = rows.slice(1);
 
-  if (!header.includes('Timestamp')) {
+  const hasTimestampHeader = header.some((h) => {
+    const value = (h || '').toString().trim().toLowerCase();
+    return value === 'timestamp' || value === 'marca temporal';
+  });
+
+  if (!hasTimestampHeader) {
     const firstRowLength = rows[0]?.length || 0;
     header = firstRowLength >= expectedHeader.length ? expectedHeader : expectedLegacyHeader;
     dataRows = rows;
@@ -77,6 +82,15 @@ function mapRowsToReports(rows: string[][], fallbackType: 'invoice' | 'quote'): 
   return dataRows.map((r) => {
     const obj: any = {};
     header.forEach((h, i) => (obj[h] = r[i]));
+
+    const timestamp = obj.Timestamp || obj['Marca temporal'] || '';
+    const customerName = obj['Customer Name'] || obj['Cliente'] || '';
+    const customerPhone = obj['Customer Phone'] || obj['Telefono'] || obj['Teléfono'] || '';
+    const customerEmail = obj['Customer Email'] || obj['Email'] || '';
+    const serviceAddress = obj['Service Address'] || obj['Dirección de servicio'] || '';
+    const serviceType = obj['Service Type'] || obj['Work Type'] || obj['Tipo de servicio'] || '';
+    const invoiceDescription = obj['Invoice Description'] || obj['Work Description'] || obj['Descripción'] || '';
+
     const parsedType = obj['Report Type'] === 'quote' ? 'quote' : 'invoice';
     const reportType = obj['Report Type'] ? parsedType : fallbackType;
     const parsedQuoteStatus = obj['Quote Status'] === 'approved' ? 'approved' : 'pending';
@@ -96,7 +110,7 @@ function mapRowsToReports(rows: string[][], fallbackType: 'invoice' | 'quote'): 
           : 'submitted';
 
     return {
-      id: obj.Timestamp || `job-${Math.random()}`,
+      id: timestamp || `job-${Math.random()}`,
       reportType,
       quoteStatus: reportType === 'quote' ? parsedQuoteStatus : undefined,
       createdByEmail: obj['Created By Email'] || undefined,
@@ -108,14 +122,14 @@ function mapRowsToReports(rows: string[][], fallbackType: 'invoice' | 'quote'): 
       lastSynced: obj['Last Synced'] || undefined,
       technicianName: obj['Technician Name'] || obj.Technician || '',
       customer: {
-        name: obj['Customer Name'] || '',
-        phone: obj['Customer Phone'] || '',
-        email: obj['Customer Email'] || '',
+        name: customerName,
+        phone: customerPhone,
+        email: customerEmail,
       },
-      serviceAddress: obj['Service Address'] || '',
-      serviceType: obj['Service Type'] || obj['Work Type'] || '',
+      serviceAddress,
+      serviceType,
       title: '',
-      invoiceDescription: obj['Invoice Description'] || obj['Work Description'] || '',
+      invoiceDescription,
       price: (() => {
         const p = parseFloat(obj['Job Price'] || '');
         return isNaN(p) ? null : p;
@@ -124,7 +138,7 @@ function mapRowsToReports(rows: string[][], fallbackType: 'invoice' | 'quote'): 
       depositTaken: obj['Deposit Taken'] === 'Yes',
       depositAmount: parseFloat(obj['Deposit Amount'] || '0') || undefined,
       materialsUsed: [],
-      completedAt: obj.Timestamp || '',
+      completedAt: timestamp,
       photos: [],
       status: computedStatus,
     } as Job;
