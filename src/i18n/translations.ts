@@ -182,7 +182,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'logs.loading': 'Cargando logs...',
     'logs.empty': 'No hay logs disponibles por ahora.',
 
-    'admin.onlyRoot': 'Solo Root puede administrar usuarios.',
+    'admin.onlyRoot': 'No tienes permiso para acceder a esta sección.',
     'admin.eyebrow': 'Administración Root',
     'admin.title': 'Gestión de usuarios',
     'admin.subtitle': 'Crea usuarios, bloquea temporalmente, elimina cuentas y cambia claves.',
@@ -430,7 +430,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'logs.loading': 'Loading logs...',
     'logs.empty': 'No logs available yet.',
 
-    'admin.onlyRoot': 'Only Root can manage users.',
+    'admin.onlyRoot': 'You do not have permission to access this section.',
     'admin.eyebrow': 'Root administration',
     'admin.title': 'User management',
     'admin.subtitle': 'Create users, temporarily block, delete accounts, and change passwords.',

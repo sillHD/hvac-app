@@ -3,7 +3,6 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { User } from '../lib/types';
-import { canManageUsers, canViewLogs } from '../lib/utils/roles';
 import { useI18n } from '../i18n/I18nProvider';
 
 interface HeaderProps {
@@ -42,6 +41,8 @@ export default function Header({ user, loading }: HeaderProps) {
   // admin-only
   const adminLinks = [{ href: '/logs', label: t('nav.logs') }];
   const rootLinks = [{ href: '/admin/users', label: t('nav.users') }];
+  const canSeeLogs = user?.role === 'admin' || user?.role === 'root';
+  const canSeeUsers = user?.role === 'root';
 
   const isActiveLink = (href: string) => {
     if (href === '/dashboard') {
@@ -103,7 +104,7 @@ export default function Header({ user, loading }: HeaderProps) {
                   {link.label}
                 </Link>
               ))}
-              {canViewLogs(user.role) &&
+              {canSeeLogs &&
                 adminLinks.map((link) => (
                   <Link
                     key={link.href}
@@ -113,7 +114,7 @@ export default function Header({ user, loading }: HeaderProps) {
                     {link.label}
                   </Link>
                 ))}
-              {canManageUsers(user.role) &&
+              {canSeeUsers &&
                 rootLinks.map((link) => (
                   <Link
                     key={link.href}
