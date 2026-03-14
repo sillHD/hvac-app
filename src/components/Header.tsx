@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { User } from '../lib/types';
 import { canManageUsers, canViewLogs } from '../lib/utils/roles';
+import { useI18n } from '../i18n/I18nProvider';
 
 interface HeaderProps {
   user: User | null;
@@ -13,6 +14,7 @@ interface HeaderProps {
 export default function Header({ user, loading }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
+  const { locale, setLocale, t } = useI18n();
 
   const toggleMenu = () => setMenuOpen((open) => !open);
 
@@ -30,16 +32,16 @@ export default function Header({ user, loading }: HeaderProps) {
 
   // navigation items available to all authenticated users
   const commonLinks = [
-    { href: '/dashboard', label: 'Dashboard' },
-    { href: '/reports', label: 'Nueva factura' },
-    { href: '/quotes', label: 'Nueva cotizacion' },
-    { href: '/reports/status', label: 'Estado' },
-    { href: '/history', label: 'Historial' },
+    { href: '/dashboard', label: t('nav.dashboard') },
+    { href: '/reports', label: t('nav.newInvoice') },
+    { href: '/quotes', label: t('nav.newQuote') },
+    { href: '/reports/status', label: t('nav.status') },
+    { href: '/history', label: t('nav.history') },
   ];
 
   // admin-only
-  const adminLinks = [{ href: '/logs', label: 'Logs' }];
-  const rootLinks = [{ href: '/admin/users', label: 'Usuarios' }];
+  const adminLinks = [{ href: '/logs', label: t('nav.logs') }];
+  const rootLinks = [{ href: '/admin/users', label: t('nav.users') }];
 
   const isActiveLink = (href: string) => {
     if (href === '/dashboard') {
@@ -67,7 +69,7 @@ export default function Header({ user, loading }: HeaderProps) {
         <button
           onClick={toggleMenu}
           className="sm:hidden text-white focus:outline-none rounded-full border border-amber-500/30 bg-white/5 p-2"
-          aria-label="Menu"
+          aria-label={t('ui.menu')}
         >
           <svg
             className="h-6 w-6"
@@ -121,12 +123,37 @@ export default function Header({ user, loading }: HeaderProps) {
                     {link.label}
                   </Link>
                 ))}
+              <div className="flex items-center gap-1 px-2 py-1">
+                <span className="text-xs text-zinc-400">{t('ui.language')}</span>
+                <button
+                  type="button"
+                  onClick={() => setLocale('es')}
+                  className={`rounded-full px-2 py-0.5 text-xs border transition-colors ${
+                    locale === 'es'
+                      ? 'border-amber-400/70 text-amber-300 bg-amber-500/10'
+                      : 'border-zinc-700 text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  {t('lang.es')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocale('en')}
+                  className={`rounded-full px-2 py-0.5 text-xs border transition-colors ${
+                    locale === 'en'
+                      ? 'border-amber-400/70 text-amber-300 bg-amber-500/10'
+                      : 'border-zinc-700 text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  {t('lang.en')}
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={handleLogout}
                 className="nav-link text-zinc-300 hover:text-amber-300 text-left"
               >
-                Salir
+                {t('nav.logout')}
               </button>
             </div>
           ) : (
@@ -134,7 +161,7 @@ export default function Header({ user, loading }: HeaderProps) {
               href="/login"
               className="nav-link text-amber-300 hover:text-amber-200"
             >
-              Iniciar sesión
+              {t('auth.login')}
             </Link>
           )}
         </nav>

@@ -2,6 +2,7 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { useEffect } from 'react';
 import Layout from '../components/Layout';
+import { I18nProvider } from '../i18n/I18nProvider';
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
@@ -18,8 +19,10 @@ export default function App({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
-    <Layout>
-      <Component {...pageProps} />
-    </Layout>
+    <I18nProvider>
+      <Layout>
+        <Component {...pageProps} />
+      </Layout>
+    </I18nProvider>
   );
 }
