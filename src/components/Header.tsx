@@ -32,6 +32,7 @@ export default function Header({ user, loading }: HeaderProps) {
   // navigation items available to all authenticated users
   const commonLinks = [
     { href: '/dashboard', label: t('nav.dashboard') },
+    { href: '/customers', label: t('nav.customers') },
     { href: '/reports', label: t('nav.newInvoice') },
     { href: '/quotes', label: t('nav.newQuote') },
     { href: '/reports/status', label: t('nav.status') },

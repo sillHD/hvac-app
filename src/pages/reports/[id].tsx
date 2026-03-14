@@ -19,7 +19,13 @@ export default function ReportDetailPage() {
     const amount = typeof value === 'number' && !isNaN(value) ? value : 0;
     return `${amount.toFixed(2)}$`;
   };
-  const canManage = user?.role === 'admin' || user?.role === 'root';
+  const canManage = (() => {
+    if (!user || !job) return false;
+    if (user.role === 'admin' || user.role === 'root') return true;
+    const isOwner = job.createdByEmail ? job.createdByEmail === user.email : job.technicianName === user.email;
+    const editableStatus = job.status === 'draft' || job.status === 'submitted' || job.status === 'processing';
+    return user.role === 'technician' && isOwner && editableStatus;
+  })();
 
   useEffect(() => {
     if (!id) return;

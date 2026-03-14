@@ -15,6 +15,8 @@ export interface ManagedUser extends User {
   disabled: boolean;
 }
 
+const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
+
 let warnedMissingRootPassword = false;
 let initializedUsers = false;
 let userStore: StoredUser[] = [];
@@ -60,9 +62,14 @@ function getUsers(): StoredUser[] {
 }
 
 export function verifyToken(token: string): User | null {
-  // simple prototype: tokens are ``user:<id>``
+  // simple prototype: token can be user:<id> or user:<id>:<issuedAtMs>
   if (!token || !token.startsWith('user:')) return null;
-  const id = token.split(':')[1];
+  const parts = token.split(':');
+  const id = parts[1];
+  const issuedAtMs = Number(parts[2] || '0');
+  if (issuedAtMs > 0 && Date.now() - issuedAtMs > TOKEN_TTL_MS) {
+    return null;
+  }
   const users = getUsers();
   const u = users.find((u) => u.id === id && !u.disabled);
   return u ? { id: u.id, email: u.email, role: u.role } : null;
@@ -74,7 +81,7 @@ export function signIn(email: string, password: string): { token: string; user: 
   const u = users.find((u) => !u.disabled && u.email === normalizedEmail && u.password === password);
   if (!u) return null;
   // in real app generate JWT/secure session
-  const token = `user:${u.id}`;
+  const token = `user:${u.id}:${Date.now()}`;
   return { token, user: { id: u.id, email: u.email, role: u.role } };
 }
 
@@ -171,4 +178,8 @@ export function canViewAllReports(role: User['role']): boolean {
 
 export function canEditOrDeleteReports(role: User['role']): boolean {
   return role === 'admin' || role === 'root';
+}
+
+export function canTechnicianEditOwnReports(role: User['role']): boolean {
+  return role === 'technician';
 }

@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import type { Job } from '../../../lib/types';
 import { createReport } from '../../../server/services/jobs';
 import { withAuth } from '../../../server/middleware/auth';
+import { logAuditEvent } from '../../../server/services/audit';
 
 // POST /api/reports/create
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -39,6 +40,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
   try {
     await createReport(report);
+    logAuditEvent({
+      action: 'report.create',
+      actorEmail: user.email,
+      actorRole: user.role,
+      targetType: 'report',
+      targetId: report.id,
+      details: {
+        reportType: report.reportType,
+        customerName: report.customer?.name,
+      },
+    });
     res.status(200).json({ ok: true, report });
   } catch (err) {
     console.error('reports/create error', err);

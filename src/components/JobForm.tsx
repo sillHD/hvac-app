@@ -209,7 +209,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
   };
 
   return (
-    <form className="space-y-8" onSubmit={handleSubmit}>
+    <form className="space-y-8 pb-28" onSubmit={handleSubmit}>
       <div className="space-y-3">
         <span className="page-eyebrow">{isQuoteMode ? t('form.eyebrowQuote') : t('form.eyebrowInvoice')}</span>
         <div className="space-y-2">
@@ -394,12 +394,13 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
               type="number"
               min="0"
               step="0.01"
+              inputMode="decimal"
               value={job.price ?? ''}
               onChange={(e) => {
                 const value = e.target.value;
                 handleChange('price', value === '' ? null : parseFloat(value));
               }}
-              className="mt-1 block w-full border rounded p-2"
+              className="mt-1 block w-full border rounded p-3 text-base"
             />
             <p className="field-note mt-1">{t('form.currentAmount')}: {formatMoney(job.price)}</p>
             {errors.price && <p className="text-red-600 text-sm">{errors.price}</p>}
@@ -425,9 +426,10 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
                     type="number"
                     min="0"
                     step="0.01"
+                    inputMode="decimal"
                     value={job.depositAmount}
                     onChange={(e) => handleChange('depositAmount', parseFloat(e.target.value))}
-                    className="mt-1 block w-full border rounded p-2"
+                    className="mt-1 block w-full border rounded p-3 text-base"
                   />
                   <p className="field-note mt-1">{t('form.currentAmount')}: {formatMoney(job.depositAmount)}</p>
                   {errors.depositAmount && <p className="text-red-600 text-sm">{errors.depositAmount}</p>}
@@ -450,15 +452,15 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
           )}
         </div>
       </fieldset>
-
-
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-full btn-primary py-3 disabled:opacity-50 shadow-[0_12px_28px_rgba(202,155,42,0.18)]"
-      >
-        {submitting ? t('form.submitting') : isQuoteMode ? t('form.submitQuote') : t('form.submitInvoice')}
-      </button>
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-amber-500/20 bg-[#171717]/95 backdrop-blur px-4 py-3 sm:static sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full btn-primary py-4 text-base disabled:opacity-50 shadow-[0_12px_28px_rgba(202,155,42,0.18)]"
+        >
+          {submitting ? t('form.submitting') : isQuoteMode ? t('form.submitQuote') : t('form.submitInvoice')}
+        </button>
+      </div>
     </form>
   );
 }

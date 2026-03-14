@@ -8,6 +8,7 @@ import {
 } from '../../../server/auth';
 import { withAuth } from '../../../server/middleware/auth';
 import { requireRole } from '../../../server/middleware/permissions';
+import { logAuditEvent } from '../../../server/services/audit';
 
 function parseRole(value: unknown): User['role'] | null {
   if (value === 'technician' || value === 'admin' || value === 'root') {
@@ -17,6 +18,9 @@ function parseRole(value: unknown): User['role'] | null {
 }
 
 function handler(req: NextApiRequest, res: NextApiResponse) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actor = (req as any).user as User;
+
   if (req.method === 'GET') {
     return res.status(200).json({ users: listManagedUsers() });
   }
@@ -34,6 +38,14 @@ function handler(req: NextApiRequest, res: NextApiResponse) {
         password: String(password),
         role: parsedRole,
         disabled: Boolean(disabled),
+      });
+      logAuditEvent({
+        action: 'user.create',
+        actorEmail: actor.email,
+        actorRole: actor.role,
+        targetType: 'user',
+        targetId: user.id,
+        details: { email: user.email, role: user.role },
       });
       return res.status(201).json({ user });
     } catch (error) {
@@ -68,6 +80,20 @@ function handler(req: NextApiRequest, res: NextApiResponse) {
         return res.status(404).json({ error: 'User not found' });
       }
 
+      logAuditEvent({
+        action: 'user.update',
+        actorEmail: actor.email,
+        actorRole: actor.role,
+        targetType: 'user',
+        targetId: updated.id,
+        details: {
+          email: updated.email,
+          role: updated.role,
+          disabled: updated.disabled,
+          changedPassword: typeof password === 'string' && password.length > 0,
+        },
+      });
+
       return res.status(200).json({ user: updated });
     } catch (error) {
       return res.status(400).json({ error: (error as Error).message });
@@ -85,6 +111,13 @@ function handler(req: NextApiRequest, res: NextApiResponse) {
       if (!removed) {
         return res.status(404).json({ error: 'User not found' });
       }
+      logAuditEvent({
+        action: 'user.delete',
+        actorEmail: actor.email,
+        actorRole: actor.role,
+        targetType: 'user',
+        targetId: id,
+      });
       return res.status(200).json({ ok: true });
     } catch (error) {
       return res.status(400).json({ error: (error as Error).message });

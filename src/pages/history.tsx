@@ -15,7 +15,13 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const { user } = useAuth();
-  const canManage = user?.role === 'admin' || user?.role === 'root';
+  const canManage = (job: Job) => {
+    if (!user) return false;
+    if (user.role === 'admin' || user.role === 'root') return true;
+    const isOwner = job.createdByEmail ? job.createdByEmail === user.email : job.technicianName === user.email;
+    const editableStatus = job.status === 'draft' || job.status === 'submitted' || job.status === 'processing';
+    return user.role === 'technician' && isOwner && editableStatus;
+  };
 
   useEffect(() => {
     async function load() {
@@ -144,7 +150,7 @@ export default function HistoryPage() {
                       {t('history.price')}: {formatMoney(job.price)}
                     </p>
                     <p>{t('history.status')}: {job.status}</p>
-                    {canManage && (
+                    {canManage(job) && (
                       <div className="flex gap-2 mt-3">
                         <a
                           href={`/reports/${job.id}`}
