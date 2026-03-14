@@ -1,29 +1,97 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 // Protected dashboard view
 import Protected from '../components/Protected';
 
 import { useAuth } from '../client/hooks/useAuth';
 import DashboardCard from '../components/DashboardCard';
+import { Job } from '../lib/types';
+import { getAuthHeaders } from '../client/lib/authHeaders';
+import { canManageUsers, canViewLogs } from '../lib/utils/roles';
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [jobs, setJobs] = useState<Job[]>([]);
 
   // assume Protected wrapper ensures user != null
-  const isAdmin = user?.role === 'admin';
+  const canViewAdminTools = canViewLogs(user?.role);
+  const isRoot = canManageUsers(user?.role);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/reports/list', {
+          headers: getAuthHeaders(),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setJobs(data.reports || []);
+        }
+      } catch (err) {
+        console.error('failed to load dashboard metrics', err);
+      }
+    }
+    load();
+  }, []);
+
+  const totalReports = jobs.length;
+  const paidReports = jobs.filter((job) => job.status === 'paid').length;
+  const activeReports = jobs.filter((job) => job.status !== 'paid' && job.status !== 'cancelled').length;
+  const pendingValue = jobs.reduce((sum, job) => {
+    if (job.status === 'paid') return sum;
+    return sum + (job.price ?? 0);
+  }, 0);
 
   return (
     <Protected>
-      <div className="space-y-6 p-4 premium-section">
-        <h1 className="text-3xl font-bold premium-gradient-text">Panel de control</h1>
+      <div className="space-y-8 p-5 sm:p-6 premium-section">
+        <div className="space-y-3">
+          <span className="page-eyebrow">Centro operativo</span>
+          <h1 className="text-3xl font-bold premium-gradient-text">Panel de control</h1>
+          <p className="page-subtitle">
+            Supervisa el trabajo del dia, revisa el estado de cobros y entra rapido a las acciones que mas usa tu equipo.
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="stat-card">
+            <p className="stat-label">Reportes totales</p>
+            <p className="stat-value">{totalReports}</p>
+            <p className="stat-note">Registros visibles en el sistema</p>
+          </div>
+          <div className="stat-card">
+            <p className="stat-label">Activos</p>
+            <p className="stat-value">{activeReports}</p>
+            <p className="stat-note">Trabajos aun en seguimiento</p>
+          </div>
+          <div className="stat-card">
+            <p className="stat-label">Pagados</p>
+            <p className="stat-value">{paidReports}</p>
+            <p className="stat-note">Facturas marcadas como saldadas</p>
+          </div>
+          <div className="stat-card">
+            <p className="stat-label">Pendiente</p>
+            <p className="stat-value">${pendingValue.toFixed(0)}</p>
+            <p className="stat-note">Monto provisional pendiente de cobro</p>
+          </div>
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <DashboardCard
             href="/reports"
-            title="Nuevo reporte"
-            description="Crear un trabajo terminado"
+            title="Nueva factura"
+            description="Crear una factura de trabajo"
             icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>}
+          />
+
+          <DashboardCard
+            href="/quotes"
+            title="Nueva cotizacion"
+            description="Crear una cotizacion sin deposito"
+            icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
             </svg>}
           />
 
@@ -45,13 +113,24 @@ export default function DashboardPage() {
             </svg>}
           />
 
-          {isAdmin && (
+          {canViewAdminTools && (
             <DashboardCard
               href="/logs"
               title="Logs de sistema"
-              description="(sólo administradores)"
+              description="Disponible para admin y root"
               icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 6h18M3 14h18M3 18h18" />
+              </svg>}
+            />
+          )}
+
+          {isRoot && (
+            <DashboardCard
+              href="/admin/users"
+              title="Usuarios"
+              description="Gestionar cuentas, claves y bloqueos"
+              icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5V9a2 2 0 00-2-2h-3M9 20H4V9a2 2 0 012-2h3m0 13v-3a3 3 0 013-3h0a3 3 0 013 3v3m-6 0h6M9 7a3 3 0 116 0 3 3 0 01-6 0z" />
               </svg>}
             />
           )}

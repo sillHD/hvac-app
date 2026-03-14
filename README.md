@@ -71,21 +71,24 @@ Each folder has a clear responsibility: frontend pages and components live under
 ### Login UI and modular AI architecture
 
 #### Credenciales de prueba
-Manejamos datos ficticios cargados en memoria.
-Usuarios disponibles (login con contraseña listada):
+Manejamos datos ficticios cargados en memoria, pero las contraseñas **no**
+se guardan en el código. Para iniciar sesión debes configurar en
+`.env.local`:
 
-- **root@hvac.local / rootpass** (rol `root`)
-- **alice@hvac-example.com / alicepass** (rol `technician`)
-- **bob@hvac-example.com / bobpass** (rol `technician`)
-- **carol@hvac-example.com / carolpass** (rol `admin`)
+- `ROOT_USER_PASSWORD` (usuario root: `ismaelcorra@gmail.com`)
+- `ADMIN_CAROL_PASSWORD` (usuario admin: `carol@hvac-example.com`)
+- `TECH_ALICE_PASSWORD` (usuario técnico: `alice@hvac-example.com`)
+- `TECH_BOB_PASSWORD` (usuario técnico: `bob@hvac-example.com`)
+
+No publiques ni compartas esos valores fuera del entorno seguro.
 
 Además definimos en `src/lib/mocks.ts`:
 
 - `mockCustomers` con nombres, teléfonos, emails y **lista de direcciones** falsas (se usan para rellenar el formulario de trabajos)
 - `mockJobs` que incluyen dos trabajos de ejemplo, logs sanitizados y estados
 
-Todos los datos son claramente inventados y no contienen información
-sensible ni credenciales reales.
+Todos los datos de negocio son inventados, pero las credenciales deben
+tratarse como secretas y manejarse sólo mediante variables de entorno.
 
 
 La autenticación devuelve un token simulado (`user:<id>`) que se almacena en

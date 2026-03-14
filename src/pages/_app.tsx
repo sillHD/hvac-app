@@ -9,9 +9,12 @@ export default function App({ Component, pageProps }: AppProps) {
     if (!('serviceWorker' in navigator)) return;
     if (process.env.NODE_ENV !== 'production') return;
 
-    navigator.serviceWorker.register('/sw.js').catch((err) => {
-      console.error('Service worker registration failed', err);
-    });
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) => registration.update())
+      .catch((err) => {
+        console.error('Service worker registration failed', err);
+      });
   }, []);
 
   return (

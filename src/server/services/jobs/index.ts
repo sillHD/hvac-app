@@ -5,13 +5,160 @@
 // MongoDB, etc., and make sure the functions run strictly server-side (no
 // front-end imports).
 
-import { Job } from '../../../lib/types';
+import { Job, PaymentSyncStatus } from '../../../lib/types';
 import { mockJobs } from '../../../lib/mocks';
+import { User, canViewAllReports } from '../../auth';
 
 const jobStore: Job[] = [...mockJobs];
 
 import { GoogleFormInternal } from '../../../lib/googleForm';
-import { appendToSheet, readSheetValues } from '../googleSheets';
+import {
+  appendToSheet,
+  deleteSheetRowByReportId,
+  updateSheetPaymentStatusByReportId,
+  readQuoteSheetValues,
+  readSheetValues,
+} from '../googleSheets';
+
+function mapRowsToReports(rows: string[][], fallbackType: 'invoice' | 'quote'): Job[] {
+  const expectedHeader = [
+    'Timestamp',
+    'Report Type',
+    'Quote Status',
+    'Created By Email',
+    'Technician',
+    'Customer Name',
+    'Customer Email',
+    'Customer Phone',
+    'Service Address',
+    'Work Type',
+    'Work Description',
+    'Job Price',
+    'Deposit Taken',
+    'Deposit Amount',
+    'QB Invoice ID',
+    'QB Invoice Number',
+    'Payment Status',
+    'Payment Amount',
+    'Payment Date',
+    'Last Synced',
+  ];
+  const expectedLegacyHeader = [
+    'Timestamp',
+    'Report Type',
+    'Quote Status',
+    'Technician',
+    'Customer Name',
+    'Customer Email',
+    'Customer Phone',
+    'Service Address',
+    'Work Type',
+    'Work Description',
+    'Job Price',
+    'Deposit Taken',
+    'Deposit Amount',
+    'QB Invoice ID',
+    'QB Invoice Number',
+    'Payment Status',
+    'Payment Amount',
+    'Payment Date',
+    'Last Synced',
+  ];
+
+  let header = rows[0] || [];
+  let dataRows = rows.slice(1);
+
+  if (!header.includes('Timestamp')) {
+    const firstRowLength = rows[0]?.length || 0;
+    header = firstRowLength >= expectedHeader.length ? expectedHeader : expectedLegacyHeader;
+    dataRows = rows;
+  }
+
+  return dataRows.map((r) => {
+    const obj: any = {};
+    header.forEach((h, i) => (obj[h] = r[i]));
+    const parsedType = obj['Report Type'] === 'quote' ? 'quote' : 'invoice';
+    const reportType = obj['Report Type'] ? parsedType : fallbackType;
+    const parsedQuoteStatus = obj['Quote Status'] === 'approved' ? 'approved' : 'pending';
+    const parsedPaymentStatus = (() => {
+      const status = (obj['Payment Status'] || '').toString().toUpperCase();
+      if (status === 'PAID') return 'PAID';
+      if (status === 'PARTIAL') return 'PARTIAL';
+      if (status === 'PENDING') return 'PENDING';
+      return undefined;
+    })() as PaymentSyncStatus | undefined;
+    const paymentAmount = parseFloat(obj['Payment Amount'] || '');
+    const computedStatus =
+      parsedPaymentStatus === 'PAID'
+        ? 'paid'
+        : parsedPaymentStatus === 'PARTIAL'
+          ? 'partial_paid'
+          : 'submitted';
+
+    return {
+      id: obj.Timestamp || `job-${Math.random()}`,
+      reportType,
+      quoteStatus: reportType === 'quote' ? parsedQuoteStatus : undefined,
+      createdByEmail: obj['Created By Email'] || undefined,
+      qbInvoiceId: obj['QB Invoice ID'] || undefined,
+      qbInvoiceNumber: obj['QB Invoice Number'] || undefined,
+      paymentStatus: parsedPaymentStatus,
+      paymentAmount: Number.isFinite(paymentAmount) ? paymentAmount : undefined,
+      paymentDate: obj['Payment Date'] || undefined,
+      lastSynced: obj['Last Synced'] || undefined,
+      technicianName: obj['Technician Name'] || obj.Technician || '',
+      customer: {
+        name: obj['Customer Name'] || '',
+        phone: obj['Customer Phone'] || '',
+        email: obj['Customer Email'] || '',
+      },
+      serviceAddress: obj['Service Address'] || '',
+      serviceType: obj['Service Type'] || obj['Work Type'] || '',
+      title: '',
+      invoiceDescription: obj['Invoice Description'] || obj['Work Description'] || '',
+      price: (() => {
+        const p = parseFloat(obj['Job Price'] || '');
+        return isNaN(p) ? null : p;
+      })(),
+      paymentTerms: '',
+      depositTaken: obj['Deposit Taken'] === 'Yes',
+      depositAmount: parseFloat(obj['Deposit Amount'] || '0') || undefined,
+      materialsUsed: [],
+      completedAt: obj.Timestamp || '',
+      photos: [],
+      status: computedStatus,
+    } as Job;
+  });
+}
+
+function mapJobToPaymentSync(job: Job): { status: PaymentSyncStatus; amount: number; date: string } {
+  const total = typeof job.price === 'number' && Number.isFinite(job.price) ? job.price : 0;
+  const partial = typeof job.depositAmount === 'number' && Number.isFinite(job.depositAmount)
+    ? Math.max(job.depositAmount, 0)
+    : 0;
+
+  if (job.status === 'paid') {
+    return {
+      status: 'PAID',
+      amount: total,
+      date: new Date().toISOString(),
+    };
+  }
+
+  if (job.status === 'partial_paid') {
+    return {
+      status: 'PARTIAL',
+      amount: partial,
+      date: new Date().toISOString(),
+    };
+  }
+
+  return {
+    status: 'PENDING',
+    amount: 0,
+    date: '',
+  };
+}
 
 export async function createReport(report: Job) {
   // persist in-memory as before
@@ -20,6 +167,9 @@ export async function createReport(report: Job) {
   // if sheets are configured, also append a row
   if (process.env.GOOGLE_SHEET_ID) {
     const payload: GoogleFormInternal = {
+      reportType: report.reportType || 'invoice',
+      quoteStatus: report.quoteStatus,
+      createdByEmail: report.createdByEmail,
       technician: report.technicianName,
       customerName: report.customer.name,
       customerEmail: report.customer.email,
@@ -40,68 +190,22 @@ export async function createReport(report: Job) {
   }
 }
 
-export async function listReports(userId?: string) {
+export async function listReports(user?: User | null) {
   // if sheet id present and we prefer it as primary store, read from sheet
   if (process.env.GOOGLE_SHEET_ID) {
     try {
-      const rows = await readSheetValues();
-      // if the sheet doesn't have a header row (e.g. first append was data),
-      // we fall back to a known column order so the mapping still works.
-      const expectedHeader = [
-        'Timestamp',
-        'Technician',
-        'Customer Name',
-        'Customer Email',
-        'Customer Phone',
-        'Service Address',
-        'Work Type',
-        'Work Description',
-        'Job Price',
-        'Deposit Taken',
-        'Deposit Amount',
+      const invoiceRows = await readSheetValues();
+      const quoteRows = await readQuoteSheetValues().catch(() => [] as string[][]);
+
+      const reports = [
+        ...mapRowsToReports(invoiceRows, 'invoice'),
+        ...mapRowsToReports(quoteRows, 'quote'),
       ];
-
-      let header = rows[0] || [];
-      let dataRows = rows.slice(1);
-
-      if (!header.includes('Timestamp')) {
-        // assume first row is actually data; treat the entire sheet as data
-        header = expectedHeader;
-        dataRows = rows; // don't drop first row
-      }
-
-      const reports: Job[] = dataRows.map((r) => {
-        const obj: any = {};
-        header.forEach((h, i) => (obj[h] = r[i]));
-        // convert minimal fields back to Job; many fields may be missing
-        return {
-          id: obj.Timestamp || `job-${Math.random()}`,
-          technicianName: obj.Technician || '',
-          customer: {
-            name: obj['Customer Name'] || '',
-            phone: obj['Customer Phone'] || '',
-            email: obj['Customer Email'] || '',
-          },
-          serviceAddress: obj['Service Address'] || '',
-          serviceType: obj['Work Type'] || '',
-          title: '',
-          invoiceDescription: obj['Work Description'] || '',
-          // parseFloat returns NaN for invalid input; convert those to null
-          price: (() => {
-            const p = parseFloat(obj['Job Price'] || '');
-            return isNaN(p) ? null : p;
-          })(),
-          paymentTerms: '',
-          depositTaken: obj['Deposit Taken'] === 'Yes',
-          depositAmount: parseFloat(obj['Deposit Amount'] || '0') || undefined,
-          materialsUsed: [],
-          completedAt: '',
-          photos: [],
-          status: 'submitted',
-        } as Job;
-      });
-      if (userId) {
-        return reports.filter((j) => j.technicianName === userId);
+      if (user && !canViewAllReports(user.role)) {
+        return reports.filter((j) => {
+          if (j.createdByEmail) return j.createdByEmail === user.email;
+          return j.technicianName === user.email;
+        });
       }
       return reports;
     } catch (err) {
@@ -110,12 +214,90 @@ export async function listReports(userId?: string) {
     }
   }
 
-  if (userId) {
-    return jobStore.filter((j) => j.technicianName === userId);
+  if (user && !canViewAllReports(user.role)) {
+    return jobStore.filter((j) => {
+      if (j.createdByEmail) return j.createdByEmail === user.email;
+      return j.technicianName === user.email;
+    });
   }
   return jobStore;
 }
 
 export async function getReport(id: string) {
-  return jobStore.find((j) => j.id === id) || null;
+  const inMemory = jobStore.find((j) => j.id === id);
+  if (inMemory) return inMemory;
+
+  if (process.env.GOOGLE_SHEET_ID) {
+    const reports = await listReports();
+    return reports.find((j) => j.id === id) || null;
+  }
+
+  return null;
+}
+
+export async function updateReport(id: string, patch: Partial<Job>) {
+  const idx = jobStore.findIndex((j) => j.id === id);
+  if (idx < 0) {
+    if (!process.env.GOOGLE_SHEET_ID) return null;
+    const fromSheets = await listReports();
+    const existing = fromSheets.find((j) => j.id === id);
+    if (!existing) return null;
+    jobStore.push(existing);
+    return updateReport(id, patch);
+  }
+
+  const current = jobStore[idx];
+  const next: Job = {
+    ...current,
+    ...patch,
+    id: current.id,
+  };
+  jobStore[idx] = next;
+
+  if (process.env.GOOGLE_SHEET_ID && next.reportType !== 'quote') {
+    const hasPaymentRelatedPatch =
+      patch.status !== undefined ||
+      patch.depositAmount !== undefined ||
+      patch.paymentStatus !== undefined ||
+      patch.paymentAmount !== undefined;
+
+    if (hasPaymentRelatedPatch) {
+      const payment = mapJobToPaymentSync(next);
+      try {
+        await updateSheetPaymentStatusByReportId(next.id, {
+          paymentStatus: payment.status,
+          paymentAmount: payment.amount,
+          paymentDate: payment.date,
+          lastSynced: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.error('[jobs] failed to sync payment status to sheet', err);
+      }
+    }
+  }
+
+  return next;
+}
+
+export async function deleteReport(id: string): Promise<{ removed: boolean; deletedFromSheet: boolean }> {
+  const idx = jobStore.findIndex((j) => j.id === id);
+  let removedFromStore = false;
+  if (idx >= 0) {
+    jobStore.splice(idx, 1);
+    removedFromStore = true;
+  }
+
+  let removedFromSheet = false;
+  if (process.env.GOOGLE_SHEET_ID) {
+    try {
+      removedFromSheet = await deleteSheetRowByReportId(id);
+    } catch (err) {
+      console.error('[jobs] failed to delete sheet row', err);
+    }
+  }
+
+  return {
+    removed: removedFromStore || removedFromSheet,
+    deletedFromSheet: removedFromSheet,
+  };
 }

@@ -1,13 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { listReports } from '../../../server/services/jobs';
-import { verifyToken } from '../../../server/auth';
+import { withAuth } from '../../../server/middleware/auth';
 
 // GET /api/reports/list
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : null;
-  const user = token ? verifyToken(token) : null;
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user = (req as any).user;
 
-  const reports = await listReports(user?.email);
+  const reports = await listReports(user);
   res.status(200).json({ reports });
 }
+
+export default withAuth(handler);

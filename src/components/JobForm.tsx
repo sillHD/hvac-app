@@ -3,12 +3,16 @@ import { z } from 'zod';
 import { Job, Customer } from '../lib/types';
 import { mockCustomers } from '../lib/mocks';
 import { useAuth } from '../client/hooks/useAuth';
+import { getAuthHeaders } from '../client/lib/authHeaders';
 
 interface JobFormProps {
   onSuccess?: () => void;
+  mode?: 'invoice' | 'quote';
 }
 
 const emptyJob: Omit<Job, 'id'> = {
+  reportType: 'invoice',
+  quoteStatus: 'pending',
   customer: { name: '', phone: '', email: '' },
   serviceAddress: '',
   serviceType: '',
@@ -25,7 +29,8 @@ const emptyJob: Omit<Job, 'id'> = {
   status: 'draft',
 };
 
-export default function JobForm({ onSuccess }: JobFormProps) {
+export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
+  const isQuoteMode = mode === 'quote';
   const { user } = useAuth();
   const [job, setJob] = useState<Omit<Job, 'id'>>({
     ...emptyJob,
@@ -141,6 +146,16 @@ export default function JobForm({ onSuccess }: JobFormProps) {
     if (Object.keys(err).length > 0) return;
     setSubmitting(true);
     try {
+      const payload: Omit<Job, 'id'> = isQuoteMode
+        ? {
+            ...job,
+            reportType: 'quote',
+            quoteStatus: job.quoteStatus || 'pending',
+            depositTaken: false,
+            depositAmount: 0,
+          }
+        : { ...job, reportType: 'invoice' };
+
       // if new customer, add to options
       if (!selectedCustomerId) {
         const newCust: Customer = {
@@ -163,8 +178,8 @@ export default function JobForm({ onSuccess }: JobFormProps) {
 
       const res = await fetch('/api/reports/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(job),
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         onSuccess?.();
@@ -181,13 +196,26 @@ export default function JobForm({ onSuccess }: JobFormProps) {
   };
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
+    <form className="space-y-8" onSubmit={handleSubmit}>
+      <div className="space-y-3">
+        <span className="page-eyebrow">{isQuoteMode ? 'Nueva cotizacion' : 'Nueva factura'}</span>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold premium-gradient-text">
+            {isQuoteMode ? 'Registrar cotizacion' : 'Registrar factura'}
+          </h2>
+          <p className="page-subtitle">
+            Captura cliente, direccion, descripcion y datos de cobro en un flujo corto pensado para movil.
+          </p>
+        </div>
+      </div>
+
       {/* choose existing customer or new */}
-      <fieldset className="border p-4 rounded">
-        <legend className="font-semibold">Cliente</legend>
+      <fieldset className="panel-fieldset">
+        <legend className="font-semibold text-amber-300">Cliente</legend>
         <div className="grid gap-4">
           <div>
             <label className="block text-sm font-medium text-zinc-100">Cliente registrado</label>
+            <p className="field-note mt-1">Selecciona un cliente existente o deja vacio para registrar uno nuevo.</p>
             <select
               value={selectedCustomerId}
               onChange={(e) => setSelectedCustomerId(e.target.value)}
@@ -205,9 +233,10 @@ export default function JobForm({ onSuccess }: JobFormProps) {
       </fieldset>
 
       {/* simplified customer section */}
-      <fieldset className="border border-amber-700/40 bg-zinc-900/80 p-4 rounded">
+      <fieldset className="panel-fieldset">
         <legend className="font-semibold text-amber-300">Técnico</legend>
         <div>
+          <p className="field-note mb-2">Asigna el trabajo al tecnico responsable antes de enviarlo.</p>
           <select
             value={job.technicianName}
             onChange={(e) => handleChange('technicianName', e.target.value)}
@@ -225,8 +254,8 @@ export default function JobForm({ onSuccess }: JobFormProps) {
       </fieldset>
 
       {/* simplified customer section */}
-      <fieldset className="border p-4 rounded">
-        <legend className="font-semibold">Cliente</legend>
+      <fieldset className="panel-fieldset">
+        <legend className="font-semibold text-amber-300">Datos del cliente</legend>
         <div className="grid gap-4">
           <div>
             <label className="block text-sm font-medium text-zinc-100">Nombre</label>
@@ -265,11 +294,12 @@ export default function JobForm({ onSuccess }: JobFormProps) {
       </fieldset>
 
       {/* Service details */}
-      <fieldset className="border border-amber-700/40 bg-zinc-900/80 p-4 rounded">
+      <fieldset className="panel-fieldset">
         <legend className="font-semibold text-amber-300">Detalles del trabajo</legend>
         <div className="grid gap-4">
           <div>
             <label className="block text-sm font-medium text-zinc-100">Dirección</label>
+            <p className="field-note mt-1">La direccion debe ser asi: Direccion, Ciudad</p>
             {addressOptions.length > 0 ? (
               <>
                 <select
@@ -341,11 +371,12 @@ export default function JobForm({ onSuccess }: JobFormProps) {
       </fieldset>
 
       {/* Financial */}
-      <fieldset className="border p-4 rounded">
-        <legend className="font-semibold">Finanzas</legend>
+      <fieldset className="panel-fieldset">
+        <legend className="font-semibold text-amber-300">Finanzas</legend>
         <div className="grid gap-4">
           <div>
             <label className="block text-sm font-medium text-zinc-100">Precio</label>
+            <p className="field-note mt-1">Usa el valor total acordado. El estado de pago se podra sincronizar despues con QuickBooks.</p>
             <input
               type="number"
               min="0"
@@ -358,29 +389,46 @@ export default function JobForm({ onSuccess }: JobFormProps) {
             />
             {errors.price && <p className="text-red-600 text-sm">{errors.price}</p>}
           </div>
-          <div className="flex items-center">
-            <input
-              id="depositTaken"
-              type="checkbox"
-              checked={job.depositTaken}
-              onChange={(e) => handleChange('depositTaken', e.target.checked)}
-              className="mr-2"
-            />
-            <label htmlFor="depositTaken" className="text-sm">
-              Depósito tomado
-            </label>
-          </div>
-          {job.depositTaken && (
+          {!isQuoteMode && (
+            <>
+              <div className="flex items-center">
+                <input
+                  id="depositTaken"
+                  type="checkbox"
+                  checked={job.depositTaken}
+                  onChange={(e) => handleChange('depositTaken', e.target.checked)}
+                  className="mr-2"
+                />
+                <label htmlFor="depositTaken" className="text-sm text-zinc-100">
+                  Depósito tomado
+                </label>
+              </div>
+              {job.depositTaken && (
+                <div>
+                  <label className="block text-sm font-medium text-zinc-100">Cantidad del depósito</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={job.depositAmount}
+                    onChange={(e) => handleChange('depositAmount', parseFloat(e.target.value))}
+                    className="mt-1 block w-full border rounded p-2"
+                  />
+                  {errors.depositAmount && <p className="text-red-600 text-sm">{errors.depositAmount}</p>}
+                </div>
+              )}
+            </>
+          )}
+          {isQuoteMode && (
             <div>
-              <label className="block text-sm font-medium text-zinc-100">Cantidad del depósito</label>
-              <input
-                type="number"
-                min="0"
-                value={job.depositAmount}
-                onChange={(e) => handleChange('depositAmount', parseFloat(e.target.value))}
+              <label className="block text-sm font-medium text-zinc-100">Estado de la cotización</label>
+              <select
+                value={job.quoteStatus || 'pending'}
+                onChange={(e) => handleChange('quoteStatus', e.target.value)}
                 className="mt-1 block w-full border rounded p-2"
-              />
-              {errors.depositAmount && <p className="text-red-600 text-sm">{errors.depositAmount}</p>}
+              >
+                <option value="pending">Pendiente</option>
+                <option value="approved">Aprobada</option>
+              </select>
             </div>
           )}
         </div>
@@ -390,9 +438,9 @@ export default function JobForm({ onSuccess }: JobFormProps) {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full btn-primary py-2 disabled:opacity-50"
+        className="w-full btn-primary py-3 disabled:opacity-50 shadow-[0_12px_28px_rgba(202,155,42,0.18)]"
       >
-        {submitting ? 'Guardando...' : 'Enviar reporte'}
+        {submitting ? 'Guardando...' : isQuoteMode ? 'Guardar cotizacion' : 'Guardar factura'}
       </button>
     </form>
   );

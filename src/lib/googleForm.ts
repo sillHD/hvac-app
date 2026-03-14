@@ -3,6 +3,9 @@
 // network logic.
 
 export interface GoogleFormInternal {
+  reportType?: 'invoice' | 'quote';
+  quoteStatus?: 'approved' | 'pending';
+  createdByEmail?: string;
   technician: string;
   customerName: string;
   customerEmail?: string; // optional for legacy form
@@ -16,6 +19,7 @@ export interface GoogleFormInternal {
 }
 
 export type GoogleFormFieldName =
+  | 'Report Type'
   | 'Technician'
   | 'Customer Name'
   | 'Customer Email'
@@ -31,6 +35,7 @@ export function mapToGoogleFormFields(
   data: GoogleFormInternal
 ): Record<GoogleFormFieldName, string> {
   return {
+    'Report Type': data.reportType || 'invoice',
     Technician: data.technician,
     'Customer Name': data.customerName,
     'Customer Email': data.customerEmail || '',

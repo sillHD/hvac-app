@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import { User } from '../lib/types';
+import { canManageUsers, canViewLogs } from '../lib/utils/roles';
 
 interface HeaderProps {
   user: User | null;
@@ -10,19 +12,41 @@ interface HeaderProps {
 
 export default function Header({ user, loading }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const router = useRouter();
 
   const toggleMenu = () => setMenuOpen((open) => !open);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Logout failed', error);
+    } finally {
+      localStorage.removeItem('token');
+      setMenuOpen(false);
+      await router.replace('/login');
+    }
+  };
 
   // navigation items available to all authenticated users
   const commonLinks = [
     { href: '/dashboard', label: 'Dashboard' },
-    { href: '/reports', label: 'Reportar' },
+    { href: '/reports', label: 'Nueva factura' },
+    { href: '/quotes', label: 'Nueva cotizacion' },
     { href: '/reports/status', label: 'Estado' },
     { href: '/history', label: 'Historial' },
   ];
 
   // admin-only
   const adminLinks = [{ href: '/logs', label: 'Logs' }];
+  const rootLinks = [{ href: '/admin/users', label: 'Usuarios' }];
+
+  const isActiveLink = (href: string) => {
+    if (href === '/dashboard') {
+      return router.pathname === '/dashboard';
+    }
+    return router.pathname === href || router.pathname.startsWith(`${href}/`);
+  };
 
   return (
     <header>
@@ -42,7 +66,7 @@ export default function Header({ user, loading }: HeaderProps) {
 
         <button
           onClick={toggleMenu}
-          className="sm:hidden text-white focus:outline-none"
+          className="sm:hidden text-white focus:outline-none rounded-full border border-amber-500/30 bg-white/5 p-2"
           aria-label="Menu"
         >
           <svg
@@ -64,40 +88,51 @@ export default function Header({ user, loading }: HeaderProps) {
         <nav
           className={`${
             menuOpen ? 'block' : 'hidden'
-          } sm:flex sm:items-center sm:justify-end sm:flex-1 w-full sm:w-auto`}
+          } sm:flex sm:items-center sm:justify-end sm:flex-1 w-full sm:w-auto mt-3 sm:mt-0`}
         >
-          {!loading && user ? (
-            <>
+          {loading ? null : user ? (
+            <div className="nav-shell-mobile sm:nav-shell flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-1 w-full sm:w-auto">
               {commonLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="block mt-2 sm:mt-0 sm:ml-4 text-zinc-100 hover:text-amber-400 transition-colors"
+                  className={`nav-link ${isActiveLink(link.href) ? 'nav-link-active' : ''}`}
                 >
                   {link.label}
                 </Link>
               ))}
-              {user.role === 'admin' &&
+              {canViewLogs(user.role) &&
                 adminLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="block mt-2 sm:mt-0 sm:ml-4 text-zinc-100 hover:text-amber-400 transition-colors"
+                    className={`nav-link ${isActiveLink(link.href) ? 'nav-link-active' : ''}`}
                   >
                     {link.label}
                   </Link>
                 ))}
-              <Link
-                href="/api/auth/logout"
-                className="block mt-2 sm:mt-0 sm:ml-4 text-zinc-300 hover:text-amber-300 transition-colors"
+              {canManageUsers(user.role) &&
+                rootLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`nav-link ${isActiveLink(link.href) ? 'nav-link-active' : ''}`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="nav-link text-zinc-300 hover:text-amber-300 text-left"
               >
                 Salir
-              </Link>
-            </>
+              </button>
+            </div>
           ) : (
             <Link
               href="/login"
-              className="block mt-2 sm:mt-0 sm:ml-4 text-amber-300 hover:text-amber-200 transition-colors"
+              className="nav-link text-amber-300 hover:text-amber-200"
             >
               Iniciar sesión
             </Link>

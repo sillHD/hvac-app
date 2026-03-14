@@ -2,6 +2,7 @@ import { User, Job, Customer } from './types';
 
 // Fictitious technicians
 export const mockUsers: User[] = [
+  { id: 'u0', email: 'ismaelcorra@gmail.com', role: 'root', name: 'Ismael Corra' },
   { id: 'u1', email: 'alice@hvac-example.com', role: 'technician', name: 'Alice Johnson' },
   { id: 'u2', email: 'bob@hvac-example.com', role: 'technician', name: 'Bob Smith' },
   { id: 'u3', email: 'carol@hvac-example.com', role: 'admin', name: 'Carol Nguyen' },

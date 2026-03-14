@@ -41,13 +41,39 @@ export type JobStatus =
   | 'processing'
   | 'invoice_created'
   | 'completed'
+  | 'partial_paid'
   | 'paid'
   | 'cancelled'
   | 'error';
 
+export type ReportType = 'invoice' | 'quote';
+export type QuoteStatus = 'approved' | 'pending';
+export type PaymentSyncStatus = 'PENDING' | 'PARTIAL' | 'PAID';
+
+export interface QuickBooksInvoiceRef {
+  qbInvoiceId?: string;
+  qbInvoiceNumber?: string;
+}
+
+export interface PaymentSyncFields {
+  paymentStatus?: PaymentSyncStatus;
+  paymentAmount?: number;
+  paymentDate?: string;
+  lastSynced?: string;
+}
+
 // full job model capturing all required fields
 export interface Job {
   id: string;
+  reportType?: ReportType;
+  quoteStatus?: QuoteStatus;
+  createdByEmail?: string;
+  qbInvoiceId?: string;
+  qbInvoiceNumber?: string;
+  paymentStatus?: PaymentSyncStatus;
+  paymentAmount?: number;
+  paymentDate?: string;
+  lastSynced?: string;
   customer: Customer;
   serviceAddress: string;
   serviceType: string;

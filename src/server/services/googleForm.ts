@@ -21,6 +21,7 @@ import {
 // change if the form is rebuilt, so we configure them via environment
 // variables.  The keys in this object are the label names defined above.
 const ENTRY_ID_MAP: Record<GoogleFormFieldName, string> = {
+  'Report Type': process.env.GF_REPORT_TYPE_ENTRY || 'entry.RPTTYPE',
   Technician: process.env.GF_TECHNICIAN_ENTRY || 'entry.XXXX',
   'Customer Name': process.env.GF_CUSTOMER_NAME_ENTRY || 'entry.YYYY',
   'Customer Email': process.env.GF_CUSTOMER_EMAIL_ENTRY || 'entry.EMAIL',

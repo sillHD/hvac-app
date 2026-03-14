@@ -1,9 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { Job } from '../../../lib/types';
 import { createReport } from '../../../server/services/jobs';
+import { withAuth } from '../../../server/middleware/auth';
 
 // POST /api/reports/create
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).end('Method Not Allowed');
@@ -19,9 +20,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     report.id = `job${Date.now()}`;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user = (req as any).user;
+  report.createdByEmail = user.email;
+
   // ensure completedAt timestamp exists
   if (!report.completedAt) {
     report.completedAt = new Date().toISOString();
+  }
+
+  if (!report.reportType) {
+    report.reportType = 'invoice';
+  }
+
+  if (report.reportType === 'quote' && !report.quoteStatus) {
+    report.quoteStatus = 'pending';
   }
 
   try {
@@ -32,3 +45,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ error: 'could not save report' });
   }
 }
+
+export default withAuth(handler);
