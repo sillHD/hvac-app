@@ -98,7 +98,12 @@ async function getServiceAccountSheetsClient(readonly: boolean) {
 
   let creds: object;
   try {
-    creds = JSON.parse(saKey);
+    const parsedKey = JSON.parse(saKey) as Record<string, unknown>;
+    // Vercel strips literal newlines from env vars; restore them in the private key
+    if (typeof parsedKey.private_key === 'string') {
+      parsedKey.private_key = parsedKey.private_key.replace(/\\n/g, '\n');
+    }
+    creds = parsedKey;
   } catch {
     const fileContent = fs.readFileSync(saKey, 'utf8');
     creds = JSON.parse(fileContent);
@@ -403,7 +408,12 @@ export async function appendToSheet(data: GoogleFormInternal): Promise<void> {
     let creds: object;
     try {
       // first assume the variable contains JSON text
-      creds = JSON.parse(saKey);
+      const parsedKey = JSON.parse(saKey) as Record<string, unknown>;
+      // Vercel strips literal newlines from env vars; restore them in the private key
+      if (typeof parsedKey.private_key === 'string') {
+        parsedKey.private_key = parsedKey.private_key.replace(/\\n/g, '\n');
+      }
+      creds = parsedKey;
     } catch {
       // if parsing fails treat saKey as a file path and read it
       try {
