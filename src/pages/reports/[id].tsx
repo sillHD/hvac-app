@@ -15,6 +15,10 @@ export default function ReportDetailPage() {
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const { user } = useAuth();
   const { t } = useI18n();
+  const formatMoney = (value: number | null | undefined) => {
+    const amount = typeof value === 'number' && !isNaN(value) ? value : 0;
+    return `${amount.toFixed(2)}$`;
+  };
   const canManage = user?.role === 'admin' || user?.role === 'root';
 
   useEffect(() => {
@@ -141,12 +145,12 @@ export default function ReportDetailPage() {
         <section className="premium-card p-4">
           <h2 className="font-semibold mb-2 text-amber-300">{t('detail.finance')}</h2>
           <p className="text-zinc-200">
-            {t('detail.price')}: ${typeof job.price === 'number' && !isNaN(job.price) ? job.price.toFixed(2) : '0.00'}
+            {t('detail.price')}: {formatMoney(job.price)}
           </p>
           <p className="text-zinc-200">{t('detail.terms')}: {job.paymentTerms}</p>
           <p className="text-zinc-200">
             {t('detail.depositTaken')}: {job.depositTaken ? t('detail.yes') : t('detail.no')}
-            {job.depositTaken && <> - {t('detail.amount')}: ${job.depositAmount}</>}
+            {job.depositTaken && <> - {t('detail.amount')}: {formatMoney(job.depositAmount)}</>}
           </p>
           {job.materialsUsed && job.materialsUsed.length > 0 && (
             <p className="text-zinc-200">{t('detail.materials')}: {job.materialsUsed.join(', ')}</p>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { DEFAULT_LOCALE, type Locale, translations } from './translations';
 
 interface I18nContextValue {
@@ -11,14 +11,30 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 const STORAGE_KEY = 'anc-hvac-locale';
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(() => {
-    if (typeof window === 'undefined') return DEFAULT_LOCALE;
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    return saved === 'es' || saved === 'en' ? saved : DEFAULT_LOCALE;
-  });
+  // Keep the first render identical on server and client to avoid hydration mismatch.
+  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
+  const initializedFromStorageRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (initializedFromStorageRef.current) return;
+
+    initializedFromStorageRef.current = true;
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved !== 'es' && saved !== 'en') return;
+    if (saved === locale) return;
+
+    // Defer state update until after hydration commit.
+    const timer = window.setTimeout(() => {
+      setLocale(saved);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [locale]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!initializedFromStorageRef.current) return;
     window.localStorage.setItem(STORAGE_KEY, locale);
   }, [locale]);
 

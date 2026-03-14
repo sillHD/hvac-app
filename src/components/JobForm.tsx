@@ -33,6 +33,10 @@ const emptyJob: Omit<Job, 'id'> = {
 export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
   const isQuoteMode = mode === 'quote';
   const { t } = useI18n();
+  const formatMoney = (value: number | null | undefined) => {
+    const amount = typeof value === 'number' && !isNaN(value) ? value : 0;
+    return `${amount.toFixed(2)}$`;
+  };
   const { user } = useAuth();
   const [job, setJob] = useState<Omit<Job, 'id'>>({
     ...emptyJob,
@@ -389,6 +393,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
             <input
               type="number"
               min="0"
+              step="0.01"
               value={job.price ?? ''}
               onChange={(e) => {
                 const value = e.target.value;
@@ -396,6 +401,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
               }}
               className="mt-1 block w-full border rounded p-2"
             />
+            <p className="field-note mt-1">{t('form.currentAmount')}: {formatMoney(job.price)}</p>
             {errors.price && <p className="text-red-600 text-sm">{errors.price}</p>}
           </div>
           {!isQuoteMode && (
@@ -418,10 +424,12 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
                   <input
                     type="number"
                     min="0"
+                    step="0.01"
                     value={job.depositAmount}
                     onChange={(e) => handleChange('depositAmount', parseFloat(e.target.value))}
                     className="mt-1 block w-full border rounded p-2"
                   />
+                  <p className="field-note mt-1">{t('form.currentAmount')}: {formatMoney(job.depositAmount)}</p>
                   {errors.depositAmount && <p className="text-red-600 text-sm">{errors.depositAmount}</p>}
                 </div>
               )}

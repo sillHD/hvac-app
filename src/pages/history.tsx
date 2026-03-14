@@ -7,6 +7,10 @@ import { useI18n } from '../i18n/I18nProvider';
 
 export default function HistoryPage() {
   const { t } = useI18n();
+  const formatMoney = (value: number | null | undefined) => {
+    const amount = typeof value === 'number' && !isNaN(value) ? value : 0;
+    return `${amount.toFixed(2)}$`;
+  };
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -107,7 +111,7 @@ export default function HistoryPage() {
             </div>
             <div className="stat-card">
               <p className="stat-label">{t('history.totalValue')}</p>
-              <p className="stat-value">${totalValue.toFixed(0)}</p>
+              <p className="stat-value">{formatMoney(totalValue)}</p>
               <p className="stat-note">{t('history.totalValueNote')}</p>
             </div>
           </div>
@@ -137,11 +141,7 @@ export default function HistoryPage() {
                     <p>{t('history.tech')}: {job.technicianName}</p>
                     <p>{new Date(job.completedAt).toLocaleDateString()}</p>
                     <p>
-                      {t('history.price')}: ${
-                        typeof job.price === 'number' && !isNaN(job.price)
-                          ? job.price.toFixed(2)
-                          : '0.00'
-                      }
+                      {t('history.price')}: {formatMoney(job.price)}
                     </p>
                     <p>{t('history.status')}: {job.status}</p>
                     {canManage && (

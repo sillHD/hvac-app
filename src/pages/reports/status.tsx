@@ -37,6 +37,14 @@ function getQuoteState(job: Job): QuoteState {
 export default function ReportStatusPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const formatMoney = (value: number | null | undefined) => {
+    const amount = typeof value === 'number' && !isNaN(value) ? value : 0;
+    return `${amount.toFixed(2)}$`;
+  };
+  const formatMoneyNoCents = (value: number | null | undefined) => {
+    const amount = typeof value === 'number' && !isNaN(value) ? value : 0;
+    return `${amount.toFixed(0)}$`;
+  };
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<StatusView>('invoices');
@@ -162,7 +170,7 @@ export default function ReportStatusPage() {
       },
       remaining === 0
         ? t('status.partialCompleted')
-        : t('status.partialSaved').replace('${amount}', remaining.toFixed(2))
+        : t('status.partialSaved').replace('${amount}', formatMoney(remaining))
     );
   };
 
@@ -186,7 +194,7 @@ export default function ReportStatusPage() {
 
   return (
     <Protected>
-      <div className="max-w-5xl mx-auto py-8 px-4 premium-section space-y-6">
+      <div className="max-w-[96rem] mx-auto py-8 px-4 premium-section space-y-6">
         <div className="space-y-3">
           <span className="page-eyebrow">{t('status.eyebrow')}</span>
           <h1 className="text-2xl font-bold premium-gradient-text">{t('status.title')}</h1>
@@ -234,7 +242,7 @@ export default function ReportStatusPage() {
           <>
             {view === 'invoices' ? (
               <>
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
                   <div className="stat-card">
                     <p className="stat-label">{t('status.paidStat')}</p>
                     <p className="stat-value text-emerald-400">{paidCount}</p>
@@ -252,12 +260,12 @@ export default function ReportStatusPage() {
                   </div>
                   <div className="stat-card">
                     <p className="stat-label">{t('status.totalValue')}</p>
-                    <p className="stat-value">${totalAmount.toFixed(0)}</p>
+                    <p className="stat-value">{formatMoney(totalAmount)}</p>
                     <p className="stat-note">{t('status.totalValueNoteInvoices')}</p>
                   </div>
                   <div className="stat-card">
                     <p className="stat-label">{t('status.pendingValue')}</p>
-                    <p className="stat-value text-orange-400">${pendingAmount.toFixed(0)}</p>
+                    <p className="stat-value text-orange-400">{formatMoneyNoCents(pendingAmount)}</p>
                     <p className="stat-note">{t('status.pendingValueNote')}</p>
                   </div>
                 </div>
@@ -339,15 +347,15 @@ export default function ReportStatusPage() {
                           <p>{t('status.operational')}: {job.status}</p>
                           <p>{t('history.tech')}: {job.technicianName}</p>
                           <p>
-                            {t('status.amount')}: ${typeof job.price === 'number' && !isNaN(job.price) ? job.price.toFixed(2) : '0.00'}
+                            {t('status.amount')}: {formatMoney(job.price)}
                           </p>
                           {paymentState === 'partial' && (
                             <>
                               <p>
-                                {t('status.deposit')}: ${((job.depositAmount ?? 0) as number).toFixed(2)}
+                                {t('status.deposit')}: {formatMoney(job.depositAmount ?? 0)}
                               </p>
                               <p>
-                                {t('status.due')}: ${Math.max((job.price ?? 0) - (job.depositAmount ?? 0), 0).toFixed(2)}
+                                {t('status.due')}: {formatMoney(Math.max((job.price ?? 0) - (job.depositAmount ?? 0), 0))}
                               </p>
                             </>
                           )}
@@ -401,7 +409,7 @@ export default function ReportStatusPage() {
               </>
             ) : (
               <>
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
                   <div className="stat-card">
                     <p className="stat-label">{t('status.approvedStat')}</p>
                     <p className="stat-value text-emerald-400">{approvedCount}</p>
@@ -414,12 +422,12 @@ export default function ReportStatusPage() {
                   </div>
                   <div className="stat-card">
                     <p className="stat-label">{t('status.totalValue')}</p>
-                    <p className="stat-value">${quoteAmount.toFixed(0)}</p>
+                    <p className="stat-value">{formatMoney(quoteAmount)}</p>
                     <p className="stat-note">{t('status.totalQuotesValueNote')}</p>
                   </div>
                   <div className="stat-card">
                     <p className="stat-label">{t('status.approvedValue')}</p>
-                    <p className="stat-value text-emerald-400">${approvedAmount.toFixed(0)}</p>
+                    <p className="stat-value text-emerald-400">{formatMoney(approvedAmount)}</p>
                     <p className="stat-note">{t('status.approvedValueNote')}</p>
                   </div>
                 </div>
@@ -484,7 +492,7 @@ export default function ReportStatusPage() {
                           <p>{t('status.operational')}: {job.status}</p>
                           <p>{t('history.tech')}: {job.technicianName}</p>
                           <p>
-                            {t('status.amount')}: ${typeof job.price === 'number' && !isNaN(job.price) ? job.price.toFixed(2) : '0.00'}
+                            {t('status.amount')}: {formatMoney(job.price)}
                           </p>
                           <p>{new Date(job.completedAt).toLocaleDateString()}</p>
                         </div>

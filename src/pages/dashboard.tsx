@@ -13,6 +13,14 @@ import { useI18n } from '../i18n/I18nProvider';
 export default function DashboardPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const formatMoney = (value: number | null | undefined) => {
+    const amount = typeof value === 'number' && !isNaN(value) ? value : 0;
+    return `${amount.toFixed(2)}$`;
+  };
+  const formatMoneyNoCents = (value: number | null | undefined) => {
+    const amount = typeof value === 'number' && !isNaN(value) ? value : 0;
+    return `${amount.toFixed(0)}$`;
+  };
   const [jobs, setJobs] = useState<Job[]>([]);
 
   // assume Protected wrapper ensures user != null
@@ -73,7 +81,7 @@ export default function DashboardPage() {
           </div>
           <div className="stat-card">
             <p className="stat-label">{t('dashboard.pending')}</p>
-            <p className="stat-value">${pendingValue.toFixed(0)}</p>
+            <p className="stat-value">{formatMoneyNoCents(pendingValue)}</p>
             <p className="stat-note">{t('dashboard.pendingNote')}</p>
           </div>
         </div>
