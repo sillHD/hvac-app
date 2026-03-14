@@ -293,6 +293,8 @@ export default function ReportStatusPage() {
 
                 <ul className="space-y-4">
                   {visibleInvoiceRows.map(({ job, paymentState }) => (
+                    // Prioriza nombre/titulo visible y deja el ID como referencia.
+                    // Esto evita que el usuario vea el numero como "titulo" principal.
                     <li
                       key={job.id}
                       className={`premium-card p-4 ${
@@ -307,9 +309,11 @@ export default function ReportStatusPage() {
                         <div>
                           <div className="mb-3 flex flex-wrap items-center gap-2">
                             <span className="status-pill">{job.serviceType || 'Sin tipo'}</span>
-                            <span className="text-xs uppercase tracking-[0.18em] text-zinc-500">{job.id}</span>
+                            <span className="text-xs uppercase tracking-[0.18em] text-zinc-500">Ref: {job.id}</span>
                           </div>
-                          <p className="font-semibold text-zinc-100">{job.customer.name}</p>
+                          <p className="font-semibold text-zinc-100">
+                            {job.customer.name || job.title || 'Reporte sin nombre'}
+                          </p>
                           <p className="text-sm text-zinc-300">{job.serviceAddress}</p>
                         </div>
                         <div className="text-sm text-zinc-200 sm:min-w-[240px]">
@@ -456,9 +460,11 @@ export default function ReportStatusPage() {
                         <div>
                           <div className="mb-3 flex flex-wrap items-center gap-2">
                             <span className="status-pill">{job.serviceType || 'Sin tipo'}</span>
-                            <span className="text-xs uppercase tracking-[0.18em] text-zinc-500">{job.id}</span>
+                            <span className="text-xs uppercase tracking-[0.18em] text-zinc-500">Ref: {job.id}</span>
                           </div>
-                          <p className="font-semibold text-zinc-100">{job.customer.name}</p>
+                          <p className="font-semibold text-zinc-100">
+                            {job.customer.name || job.title || 'Reporte sin nombre'}
+                          </p>
                           <p className="text-sm text-zinc-300">{job.serviceAddress}</p>
                         </div>
                         <div className="text-sm text-zinc-200 sm:min-w-[240px]">
