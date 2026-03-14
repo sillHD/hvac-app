@@ -1,3 +1,22 @@
+/**
+ * JobForm.tsx — Formulario de creación de invoices y quotes.
+ *
+ * Props:
+ *  onSuccess  — Callback al guardar correctamente el reporte
+ *  mode       — 'invoice' (factura) | 'quote' (cotización). Default: 'invoice'
+ *
+ * Características:
+ *  - Autocompletado de cliente: al seleccionar un cliente del dropdown, se llenan
+ *    nombre, email, teléfono y dirección automáticamente.
+ *  - Validación con Zod: los campos requeridos se validan antes de enviar.
+ *  - Preview de dinero: los campos precio y depósito muestran el valor
+ *    formateado en tiempo real (ej: "Monto actual: 150.00$").
+ *  - UX móvil: botón de submit sticky en la parte inferior en pantallas pequeñas.
+ *  - Envió: POST /api/reports/create con el token en Authorization.
+ *
+ * NOTA: El campo technicianName se prerrellena con la info del usuario logueado.
+ * Las fotos actualmente son URLs de texto libre (no subida de archivos).
+ */
 import { useState, useEffect, FormEvent } from 'react';
 import { z } from 'zod';
 import { Job, Customer } from '../lib/types';

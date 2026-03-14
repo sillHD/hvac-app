@@ -1,3 +1,23 @@
+/**
+ * jobStatus.ts — Utilidades para el ciclo de vida de estados de un trabajo.
+ *
+ * Exporta:
+ *  jobStatusOrder  — Array ordenado del flujo de estados (draft → paid)
+ *  jobStatusLabels — Etiquetas en español para mostrar en la UI
+ *  isFinalStatus() — true si el estado es terminal (no puede avanzar)
+ *  canTransition() — Valida si una transición de estado es permitida
+ *
+ * Flujo normal de un Job:
+ *   draft → submitted → processing → invoice_created → completed → partial_paid → paid
+ *
+ * Estados especiales:
+ *   cancelled — Se puede llegar desde cualquier estado no final
+ *   error     — Estado de error, puede venir de cualquier punto
+ *
+ * NOTA: canTransition() solo permite movimientos hacia adelante en jobStatusOrder.
+ * Si necesitas permitir regresiones (como de 'completed' a 'processing'),
+ * ajusta la lógica en la función directamente.
+ */
 import { JobStatus } from '../types';
 
 // Ordered list useful for transitions or display

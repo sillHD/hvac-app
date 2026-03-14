@@ -1,3 +1,34 @@
+/**
+ * googleSheets.ts — Integración con Google Sheets API.
+ *
+ * Este servicio es el puente entre la aplicación y la hoja de cálculo de Google.
+ * Funciones clave:
+ *  appendToSheet(payload)              — Agrega una nueva fila al sheet de invoices
+ *  readSheetValues()                   — Lee todas las filas de invoices
+ *  readQuoteSheetValues()              — Lee todas las filas de quotes
+ *  deleteSheetRowByReportId(id)        — Elimina la fila con ese timestamp/ID
+ *  updateSheetPaymentStatusByReportId  — Actualiza columnas de pago en una fila
+ *
+ * Configuración requerida en .env.local:
+ *  GOOGLE_SHEET_ID          — ID de la hoja de Google Sheets
+ *  GOOGLE_QUOTES_SHEET_ID   — ID de la hoja de quotes (puede ser la misma)
+ *  GOOGLE_SERVICE_ACCOUNT   — JSON de la cuenta de servicio (como string)
+ *    O bien: GOOGLE_CLIENT_EMAIL + GOOGLE_PRIVATE_KEY (par alternativo)
+ *
+ * NOTA: Si GOOGLE_SHEET_ID no está configurado, los reportes solo se guardan
+ * en memoria (el store en memoria se pierde al reiniciar el servidor).
+ *
+ * Compatibilidad con el sistema legado:
+ *  La hoja puede tener registros del sistema anterior sin la columna 'Created By Email'.
+ *  El parser en services/jobs/index.ts lo maneja con dos formatos de headers.
+ *
+ * Formato de la hoja principal (invoices):
+ *  Timestamp | Report Type | Quote Status | Created By Email | Technician | Customer Name |
+ *  Customer Email | Customer Phone | Service Address | Work Type | Work Description |
+ *  Job Price | Deposit Taken | Deposit Amount | QB Invoice ID | QB Invoice Number |
+ *  Payment Status | Payment Amount | Payment Date | Last Synced
+ */
+
 // Service to append HVAC job records directly to a Google Sheet using the
 // Sheets REST API.  The same sheet ID is shared by two different features:
 //   * the old `/api/submitForm` route, which originally posted to a Google

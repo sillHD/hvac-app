@@ -1,3 +1,21 @@
+/**
+ * LoginForm.tsx — Formulario de inicio de sesión.
+ *
+ * Props:
+ *  onSuccess — Callback invocado al hacer login correctamente.
+ *               El padre (login.tsx) usa esto para redirigir al dashboard.
+ *
+ * Flujo:
+ *  1. Usuario ingresa email + password y envió el formulario
+ *  2. POST /api/auth/login con las credenciales
+ *  3. Si éxito: guarda el token en localStorage y llama onSuccess()
+ *  4. Si 429 (rate limit): muestra tiempo de espera en segundos
+ *  5. Si 401: muestra mensaje de credenciales incorrectas
+ *
+ * Funcionalidad de recuperación de contraseña:
+ *  Actualmente es un placeholder que muestra un mensaje genérico.
+ *  En el futuro, conectar a un endpoint de reset de contraseña.
+ */
 import { FormEvent, useState } from 'react';
 import { useI18n } from '../i18n/I18nProvider';
 

@@ -1,0 +1,149 @@
+/**
+ * securityAlerts.ts — Servicio de alertas de seguridad por correo electrónico.
+ *
+ * Este módulo está PREPARADO pero DESACTIVADO.
+ * Para activarlo, debes:
+ *   1. Configurar las variables de entorno SMTP en .env.local:
+ *        SMTP_HOST=smtp.tu-proveedor.com
+ *        SMTP_PORT=587
+ *        SMTP_USER=tu@correo.com
+ *        SMTP_PASS=tu_contraseña_o_app_password
+ *        SMTP_FROM=tu@correo.com
+ *   2. Cambiar ALERTS_ENABLED a `true` en este archivo.
+ *
+ * Proveedores compatibles:
+ *   - Gmail:      SMTP_HOST=smtp.gmail.com, SMTP_PORT=587 (requiere App Password 2FA)
+ *   - Outlook365: SMTP_HOST=smtp.office365.com, SMTP_PORT=587
+ *   - SendGrid:   SMTP_HOST=smtp.sendgrid.net, SMTP_PORT=587, SMTP_USER=apikey
+ *
+ * Lógica anti-spam:
+ *   Solo se envía 1 alerta por combinación email+IP cada ALERT_COOLDOWN_MS (15 min).
+ *   Si SMTP no está configurado o ALERTS_ENABLED=false, solo imprime un warning en consola.
+ */
+
+// ─── INTERRUPTOR PRINCIPAL ──────────────────────────────────────────────────
+// Cambia a `true` cuando hayas configurado las variables SMTP en .env.local
+const ALERTS_ENABLED = false;
+// ────────────────────────────────────────────────────────────────────────────
+
+import nodemailer from 'nodemailer';
+
+/** Correo del administrador que recibe las alertas */
+const ADMIN_ALERT_EMAIL = 'ismaelcorra@gmail.com';
+
+/** Tiempo mínimo entre dos alertas para la misma identidad (email+IP) — 15 minutos */
+const ALERT_COOLDOWN_MS = 15 * 60 * 1000;
+
+/** Registro en memoria de cuándo se envió la última alerta por identidad */
+const lastAlertByIdentity = new Map<string, number>();
+
+/** Datos necesarios para construir la alerta */
+interface LoginLockoutAlertInput {
+  email: string;       // Email intentado
+  ip: string;          // IP origen de los intentos
+  blockedSeconds: number; // Segundos que dura el bloqueo
+}
+
+/** Genera una clave única para una combinación email+IP */
+function buildIdentityKey(input: LoginLockoutAlertInput): string {
+  return `${(input.email || '').trim().toLowerCase()}|${(input.ip || '').trim().toLowerCase()}`;
+}
+
+/** Determina si se debe enviar alerta (respeta el cooldown anti-spam) */
+function shouldSendAlert(identityKey: string): boolean {
+  const now = Date.now();
+  const last = lastAlertByIdentity.get(identityKey) || 0;
+  if (now - last < ALERT_COOLDOWN_MS) {
+    return false; // demasiado pronto, omitir
+  }
+  lastAlertByIdentity.set(identityKey, now); // registrar timestamp actual
+  return true;
+}
+
+/**
+ * Lee las variables SMTP del entorno y devuelve la configuración del mailer.
+ * Retorna null si alguna variable obligatoria no está definida.
+ */
+function getMailerConfig() {
+  const host = process.env.SMTP_HOST || '';
+  const port = Number.parseInt(process.env.SMTP_PORT || '587', 10);
+  const user = process.env.SMTP_USER || '';
+  const pass = process.env.SMTP_PASS || '';
+  const from = process.env.SMTP_FROM || user || '';
+
+  if (!host || !port || !user || !pass || !from) {
+    return null; // SMTP incompleto — no enviar
+  }
+
+  return {
+    host,
+    port,
+    secure: port === 465, // SSL directo solo en puerto 465; el resto usa STARTTLS
+    auth: { user, pass },
+    from,
+  };
+}
+
+/**
+ * Envía un correo de alerta al administrador cuando una cuenta/IP es bloqueada
+ * por demasiados intentos de inicio de sesión fallidos.
+ *
+ * @returns true si el correo fue enviado, false si fue omitido o falló.
+ *
+ * NOTA: Esta función nunca lanza excepciones — los errores se logeans en consola
+ * y el flujo de autenticación continúa normalmente.
+ */
+export async function sendLoginLockoutAlert(input: LoginLockoutAlertInput): Promise<boolean> {
+  // Si las alertas están desactivadas, solo mostrar aviso en consola
+  if (!ALERTS_ENABLED) {
+    console.warn('[security-alert] Alertas desactivadas (ALERTS_ENABLED=false). Para activar, edita securityAlerts.ts', {
+      email: input.email,
+      ip: input.ip,
+      blockedSeconds: input.blockedSeconds,
+    });
+    return false;
+  }
+
+  const identityKey = buildIdentityKey(input);
+  if (!shouldSendAlert(identityKey)) {
+    return false; // dentro del período de cooldown, no enviar de nuevo
+  }
+
+  const config = getMailerConfig();
+  if (!config) {
+    // SMTP no configurado — warning informativo, nunca bloquea la app
+    console.warn('[security-alert] SMTP no configurado; alerta no enviada', {
+      email: input.email,
+      ip: input.ip,
+      blockedSeconds: input.blockedSeconds,
+      adminEmail: ADMIN_ALERT_EMAIL,
+    });
+    return false;
+  }
+
+  // Crear transportador nodemailer con la config del entorno
+  const transporter = nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    auth: config.auth,
+  });
+
+  const now = new Date().toISOString();
+
+  // Enviar el correo de alerta
+  await transporter.sendMail({
+    from: config.from,
+    to: ADMIN_ALERT_EMAIL,
+    subject: '[HVAC App] Security Alert: Too many login attempts',
+    text: [
+      'Security alert generated by HVAC App.',
+      `Time: ${now}`,
+      `Email attempted: ${input.email || '(empty)'}`,
+      `IP: ${input.ip || '(unknown)'}`,
+      `Blocked for: ${input.blockedSeconds}s`,
+    ].join('\n'),
+  });
+
+  return true;
+}

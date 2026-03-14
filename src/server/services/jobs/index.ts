@@ -1,3 +1,30 @@
+/**
+ * services/jobs/index.ts — Capa de persistencia de trabajos (reports).
+ *
+ * Mantiene un store en memoria inicializado con mockJobs.
+ * Si GOOGLE_SHEET_ID está configurado, también sincroniza con Google Sheets.
+ *
+ * Arquitectura de doble fuente:
+ *  - En memoria (jobStore): rápida, se pierde al reiniciar
+ *  - Google Sheets: persistente, lenta, sirve como fuente de verdad
+ *
+ * Funciones exportadas:
+ *  listReports(user)         — Lista trabajos según el rol del usuario
+ *  getReport(id)             — Obtiene un trabajo por ID
+ *  createReport(report)      — Crea y persiste en memoria + Sheets
+ *  updateReport(id, patch)   — Actualiza campos de un trabajo
+ *  deleteReport(id)          — Elimina de memoria y de Sheets si aplica
+ *  syncPaymentToQuickBooks() — Sincroniza estado de pago con QuickBooks
+ *
+ * Formato de columnas de Sheets:
+ *  Compatible con el sistema legado (con o sin columna 'Created By Email').
+ *  El parser mapRowsToReports() maneja ambos formatos de headers.
+ *
+ * Para migración a BD real:
+ *  Reemplazar las funciones de este archivo con llamadas a la BD.
+ *  La interfaz pública (parámetros y retornos) debe mantenerse igual.
+ */
+
 // Job-related persistence/service layer.
 // For now we keep an in‑memory store using mock data.  All exported functions
 // return Promises and mirror what a real database adapter might look like.  In

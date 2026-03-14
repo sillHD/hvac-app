@@ -1,3 +1,17 @@
+/**
+ * mocks.ts — Datos de prueba para desarrollo.
+ *
+ * Provee usuarios, clientes y trabajos ficticios para:
+ *  - Inicializar los stores en memoria al arrancar el servidor
+ *  - Facilitar desarrollo sin necesidad de backend real
+ *
+ * IMPORTANTE: En producción, estos mocks son el punto de partida.
+ * Los datos reales se cargan desde Google Sheets (ver services/jobs/index.ts).
+ * Los clientes se cargan desde customerStore (ver services/customers.ts).
+ *
+ * Para agregar datos de prueba adicionales, edita directamente este archivo.
+ * Los cambios se reflejan inmediatamente al reiniciar el servidor de desarrollo.
+ */
 import { User, Job, Customer } from './types';
 
 // Fictitious technicians

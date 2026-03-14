@@ -1,3 +1,28 @@
+/**
+ * types/index.ts — Tipos compartidos entre frontend y backend.
+ *
+ * Este archivo es el punto único de verdad para las interfaces de dominio.
+ * Impórtalo desde cualquier parte del proyecto con:
+ *   import type { Job, Customer, JobStatus } from '@/lib/types'
+ *
+ * Jerarquía de entidades:
+ *
+ *  User          — Usuario del sistema (técnico, admin, root)
+ *  Customer      — Cliente al que se le presta el servicio
+ *  Job           — Trabajo / reporte de servicio (invoice o quote)
+ *  InvoiceLog    — Registro de facturación asociado a un Job
+ *
+ * Tipos derivados:
+ *  JobStatus           — Ciclo de vida de un Job
+ *  ReportType          — 'invoice' | 'quote'
+ *  QuoteStatus         — 'approved' | 'pending'
+ *  PaymentSyncStatus   — Estado de pago syncónico con QuickBooks
+ *
+ * NOTA: Estos tipos se usan directamente en las rutas API (Next.js server)
+ * y en los componentes de React. Evitar agregar lógica de negocio aquí;
+ * mantenerlos solo como definiciones de forma (shape).
+ */
+
 // Shared types used across frontend and backend
 
 export interface JobReport {

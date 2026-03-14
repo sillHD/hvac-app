@@ -1,3 +1,14 @@
+/**
+ * Layout.tsx — Estructura base de todas las páginas.
+ *
+ * Envuelve el contenido de cada página con:
+ *  - Fondo oscuro y color de texto base
+ *  - Header con avatar del usuario autenticado
+ *  - Contenedor <main> centrado y con padding uniforme
+ *
+ * Uso: Envuelto en _app.tsx alrededor de cada <Component>
+ * No forza autenticación; para eso usa el componente Protected.
+ */
 import { ReactNode } from 'react';
 import { useAuth } from '../client/hooks/useAuth';
 import Header from './Header';

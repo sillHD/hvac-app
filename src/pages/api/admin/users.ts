@@ -1,3 +1,21 @@
+/**
+ * api/admin/users.ts — Gestión de usuarios del sistema.
+ *
+ * Métodos: GET, POST, PATCH, DELETE
+ * Acceso: Solo usuarios con rol 'root' (withAuth + requireRole('root'))
+ *
+ * GET              — Lista todos los usuarios gestionados
+ * POST             — Crea usuario (body: { email, role, password, disabled? })
+ * PATCH            — Actualiza usuario (body: { id, email?, role?, password?, disabled? })
+ * DELETE ?id=xxx   — Elimina usuario por ID
+ *
+ * Restricciones:
+ *  - No se puede crear otro usuario 'root'
+ *  - No se puede cambiar el rol de un usuario existente a 'root'
+ *  - El usuario root no puede ser desactivado ni eliminado
+ *
+ * Todas las operaciones de escritura generan evento de auditoría.
+ */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import {
   createUser,

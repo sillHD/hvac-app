@@ -1,14 +1,39 @@
+/**
+ * api/reports/[id].ts — Operaciones sobre un reporte específico.
+ *
+ * Métodos: GET, PATCH, DELETE
+ * Acceso: withAuth (todos los autenticados)
+ *
+ * Control de acceso:
+ *  GET:
+ *    - admin/root: puede ver cualquier reporte
+ *    - technician: solo puede ver sus propios reportes
+ *  PATCH / DELETE:
+ *    - admin/root: puede editar y eliminar cualquier reporte
+ *    - technician: puede editar/eliminar SOLO sus propios reportes
+ *      en estados 'draft', 'submitted' o 'processing'
+ *
+ * Respuestas:
+ *  200  — { ok: true, report: Job } para PATCH | { ok: true } para DELETE
+ *  400  — Parámetros inválidos
+ *  401  — Sin autenticación
+ *  403  — Sin permiso para ese reporte
+ *  404  — Reporte no encontrado
+ *  405  — Método no permitido
+ */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { deleteReport, getReport, updateReport } from '../../../server/services/jobs';
 import { canEditOrDeleteReports, canTechnicianEditOwnReports } from '../../../server/auth';
 import { withAuth } from '../../../server/middleware/auth';
 import { logAuditEvent } from '../../../server/services/audit';
 
+/** Determina si el usuario es el creador/técnico del reporte */
 function isOwnerReport(report: { createdByEmail?: string; technicianName?: string }, userEmail: string): boolean {
   if (report.createdByEmail) return report.createdByEmail === userEmail;
   return report.technicianName === userEmail;
 }
 
+/** Los técnicos solo pueden mutar reportes en estados editables */
 function canTechnicianMutateReportStatus(status: string | undefined): boolean {
   return status === 'draft' || status === 'submitted' || status === 'processing';
 }

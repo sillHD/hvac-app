@@ -1,3 +1,24 @@
+/**
+ * Header.tsx — Barra de navegación principal de la aplicación.
+ *
+ * Responsabilidades:
+ *  - Mostrar el logo de ANC HVAC (vinculado a la home)
+ *  - Renderizar los enlaces de navegación según el rol del usuario:
+ *      - Todos:       Dashboard, Clientes, Nueva Factura, Nueva Cotización, Estado, Historial
+ *      - admin/root:  + Logs de auditoría
+ *      - root:        + Gestión de usuarios
+ *  - Menú hamburguesa en móvil (toggle con estado `menuOpen`)
+ *  - Selector de idioma ES/EN
+ *  - Botón de Logout (llama a /api/auth/logout, borra token de localStorage)
+ *
+ * Props:
+ *  user    — Usuario autenticado o null
+ *  loading — Si true, no muestra los enlaces (previene flash de navegación)
+ *
+ * NOTA: La visibilidad por rol se controla en el componente directamente.
+ * Si en el futuro necesitas agregar una nueva ruta protegida, añádela a la lista
+ * correcta: commonLinks/adminLinks/rootLinks.
+ */
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';

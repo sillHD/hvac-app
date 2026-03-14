@@ -1,3 +1,19 @@
+/**
+ * dashboard.tsx — Página principal tras el login.
+ *
+ * Muestra:
+ *  - Tarjetas de estadísticas: total de trabajos, valor total, pendiente de cobro
+ *  - Accesos rápidos: nueva factura, nueva cotización, ver historial
+ *  - Botones de herramientas administrativas (admin/root): logs, usuarios
+ *
+ * Datos: Se cargan desde GET /api/reports/list usando el token del cliente.
+ *        Solo muestra los reportes visibles para el rol del usuario.
+ *
+ * Formatos monetarios:
+ *  formatMoney()        — Muestra cifra con 2 decimales más $ (ej: "150.00$")
+ *  formatMoneyNoCents() — Muestra cifra sin decimales más $ (ej: "150$")
+ *                         Usado solo en la tarjeta de "Pendiente".
+ */
 import React, { useEffect, useState } from 'react';
 
 // Protected dashboard view

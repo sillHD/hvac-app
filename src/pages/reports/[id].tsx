@@ -1,3 +1,21 @@
+/**
+ * reports/[id].tsx — Página de detalle de un reporte específico.
+ *
+ * Muestra toda la información de un trabajo: tipo, estado, cliente,
+ * descripción, precio, depósito, materiales, fotos, logs internos.
+ *
+ * Según permisos, permite:
+ *  - Cambiar el estado del reporte
+ *  - Eliminar el reporte
+ *
+ * Control de acceso (canManage):
+ *  - admin/root: siempre puede gestionar
+ *  - technician: solo si es el creador Y el estado es editable
+ *    (draft, submitted, processing)
+ *
+ * Los logs de actividad interna solo se muestran a admin/root
+ * (el servidor los omite para técnicos en GET /api/reports/[id]).
+ */
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import Protected from '../../components/Protected';

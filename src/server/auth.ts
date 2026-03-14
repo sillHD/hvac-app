@@ -1,3 +1,26 @@
+/**
+ * auth.ts — Capa de autenticación del servidor.
+ *
+ * Responsabilidades:
+ *  - Mantener el store en memoria de usuarios (inicializado desde variables de entorno).
+ *  - Verificar tokens de sesión (formato: "user:<id>:<issuedAtMs>").
+ *  - Firmar nuevos tokens al hacer login (signIn).
+ *  - CRUD de usuarios gestionados (create/update/delete).
+ *  - Helpers de autorización por rol (canViewAllReports, etc.).
+ *
+ * IMPORTANTE — Seguridad:
+ *  - Los tokens son simples strings en memoria; en producción usar JWT firmado o sesiones de BD.
+ *  - Las contraseñas se comparan en texto plano; en producción usar bcrypt/argon2.
+ *  - Los usuarios se cargan desde variables de entorno al primer uso; si la variable está vacía,
+ *    ese usuario no es registrado (el root queda desactivado si ROOT_USER_PASSWORD no está set).
+ *
+ * Variables de entorno requeridas (en .env.local):
+ *   ROOT_USER_PASSWORD     — Contraseña del usuario root (ismaelcorra@gmail.com)
+ *   ADMIN_CAROL_PASSWORD   — Contraseña de la admin Carol
+ *   TECH_ALICE_PASSWORD    — Contraseña de la técnica Alice
+ *   TECH_BOB_PASSWORD      — Contraseña del técnico Bob
+ */
+
 // Server-side authentication helpers
 
 export interface User {
@@ -6,15 +29,18 @@ export interface User {
   role: 'technician' | 'admin' | 'root';
 }
 
+/** Usuario almacenado internamente (incluye contraseña, nunca exponer al cliente) */
 interface StoredUser extends User {
   password: string;
   disabled: boolean;
 }
 
+/** Usuario público para gestión desde el panel de administración */
 export interface ManagedUser extends User {
   disabled: boolean;
 }
 
+/** Duración máxima de un token de sesión: 12 horas */
 const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
 
 let warnedMissingRootPassword = false;

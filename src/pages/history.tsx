@@ -1,3 +1,17 @@
+/**
+ * history.tsx — Historial de todos los trabajos del usuario.
+ *
+ * Muestra tabla/lista de todos los reportes visibles para el usuario actual.
+ * Permite editar y eliminar reportes según permisos:
+ *  - admin/root: puede gestionar cualquier reporte
+ *  - technician: solo puede gestionar sus propios reportes en estados
+ *    'draft', 'submitted' o 'processing'
+ *
+ * Verificación de permisos:
+ *  canManage(job) — Función que combina rol, propiedad del reporte y estado.
+ *                    Debe mantenerse en sincronía con la lógica del servidor
+ *                    en api/reports/[id].ts.
+ */
 import React, { useEffect, useState } from 'react';
 import Protected from '../components/Protected';
 import { Job } from '../lib/types';

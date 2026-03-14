@@ -1,3 +1,18 @@
+/**
+ * customers.tsx — Página de gestión de clientes.
+ *
+ * Funcionalidades:
+ *  - Lista clientes con búsqueda en tiempo real (filtra por nombre, email, teléfono, dirección)
+ *  - Crear nuevo cliente (formulario con nombre, email, teléfono, direcciones)
+ *  - Editar cliente existente (carga datos en el formulario, envía PATCH)
+ *  - Eliminar cliente (con confirmación)
+ *
+ * Las direcciones se editan en un único campo de texto separado por |  (pipe),
+ * y se parsean al enviar para crear el array de strings.
+ *
+ * Acceso: Cualquier usuario autenticado (Protected).
+ * CRUD: Llama a /api/customers con los métodos GET, POST, PATCH, DELETE.
+ */
 import React, { FormEvent, useEffect, useState } from 'react';
 import Protected from '../components/Protected';
 import { getAuthHeaders } from '../client/lib/authHeaders';

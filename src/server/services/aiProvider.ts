@@ -1,3 +1,24 @@
+/**
+ * aiProvider.ts — Capa de abstracción para proveedores de IA.
+ *
+ * Permite cambiar de proveedor de IA (Gemini ⇔ OpenAI) sin modificar
+ * el código consumidor. Solo cambia la variable AI_PROVIDER en .env.local.
+ *
+ * Uso:
+ *   import { callAI } from '@/server/services/aiProvider';
+ *   const result = await callAI({ prompt: 'Genera descripción de trabajo...' });
+ *
+ * Variables de entorno:
+ *  AI_PROVIDER    — 'gemini' (default) | 'openai'
+ *  GEMINI_API_KEY — Requerido si AI_PROVIDER=gemini
+ *  OPENAI_KEY     — Requerido si AI_PROVIDER=openai (no implementado aún)
+ *
+ * Para agregar un nuevo proveedor:
+ *  1. Crea services/mi-proveedor/index.ts con la misma firma (AIRequest/AIResponse)
+ *  2. Impórtalo aquí
+ *  3. Añade el case en callAI()
+ */
+
 // Abstraction layer for AI providers.  The frontend must not import this
 // module directly; API routes or other server code call `callAI` and receive a
 // consistent result regardless of the underlying provider.  This layer is
