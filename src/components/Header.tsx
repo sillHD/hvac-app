@@ -21,7 +21,7 @@
  */
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { User } from '../lib/types';
 import { useI18n } from '../i18n/I18nProvider';
