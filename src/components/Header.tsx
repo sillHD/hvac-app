@@ -33,12 +33,18 @@ interface HeaderProps {
 
 export default function Header({ user, loading }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
   const { locale, setLocale, t } = useI18n();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
-  const toggleMenu = () => setMenuOpen((open) => !open);
+  const toggleMenu = () => {
+    if (isNavigating) return;
+    setMenuOpen((open) => !open);
+  };
 
-  const handleLogout = async () => {
+  const performLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (error) {
@@ -48,6 +54,25 @@ export default function Header({ user, loading }: HeaderProps) {
       setMenuOpen(false);
       await router.replace('/login');
     }
+  };
+
+  const onClickLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const onConfirmLogout = async () => {
+    try {
+      setLogoutLoading(true);
+      await performLogout();
+    } finally {
+      setLogoutLoading(false);
+      setShowLogoutConfirm(false);
+    }
+  };
+
+  const onCancelLogout = () => {
+    if (logoutLoading) return;
+    setShowLogoutConfirm(false);
   };
 
   // navigation items available to all authenticated users
@@ -73,6 +98,25 @@ export default function Header({ user, loading }: HeaderProps) {
     return router.pathname === href || router.pathname.startsWith(`${href}/`);
   };
 
+  useEffect(() => {
+    const onDone = () => setIsNavigating(false);
+    router.events.on('routeChangeComplete', onDone);
+    router.events.on('routeChangeError', onDone);
+    return () => {
+      router.events.off('routeChangeComplete', onDone);
+      router.events.off('routeChangeError', onDone);
+    };
+  }, [router.events]);
+
+  const handleNavTap = (e: React.MouseEvent) => {
+    if (isNavigating) {
+      e.preventDefault();
+      return;
+    }
+    setIsNavigating(true);
+    setMenuOpen(false);
+  };
+
   return (
     <header>
       <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
@@ -91,7 +135,8 @@ export default function Header({ user, loading }: HeaderProps) {
 
         <button
           onClick={toggleMenu}
-          className="sm:hidden text-white focus:outline-none rounded-full border border-amber-500/30 bg-white/5 p-2"
+          disabled={isNavigating}
+          className="sm:hidden text-white focus:outline-none rounded-full border border-amber-500/30 bg-white/5 p-2 disabled:opacity-50"
           aria-label={t('ui.menu')}
         >
           <svg
@@ -121,7 +166,10 @@ export default function Header({ user, loading }: HeaderProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`nav-link ${isActiveLink(link.href) ? 'nav-link-active' : ''}`}
+                  onClick={handleNavTap}
+                  className={`nav-link ${isActiveLink(link.href) ? 'nav-link-active' : ''} ${
+                    isNavigating ? 'pointer-events-none opacity-70' : ''
+                  }`}
                 >
                   {link.label}
                 </Link>
@@ -131,7 +179,10 @@ export default function Header({ user, loading }: HeaderProps) {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`nav-link ${isActiveLink(link.href) ? 'nav-link-active' : ''}`}
+                    onClick={handleNavTap}
+                    className={`nav-link ${isActiveLink(link.href) ? 'nav-link-active' : ''} ${
+                      isNavigating ? 'pointer-events-none opacity-70' : ''
+                    }`}
                   >
                     {link.label}
                   </Link>
@@ -141,7 +192,10 @@ export default function Header({ user, loading }: HeaderProps) {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`nav-link ${isActiveLink(link.href) ? 'nav-link-active' : ''}`}
+                    onClick={handleNavTap}
+                    className={`nav-link ${isActiveLink(link.href) ? 'nav-link-active' : ''} ${
+                      isNavigating ? 'pointer-events-none opacity-70' : ''
+                    }`}
                   >
                     {link.label}
                   </Link>
@@ -173,8 +227,9 @@ export default function Header({ user, loading }: HeaderProps) {
               </div>
               <button
                 type="button"
-                onClick={handleLogout}
-                className="nav-link text-zinc-300 hover:text-amber-300 text-left"
+                onClick={onClickLogout}
+                disabled={isNavigating}
+                className="nav-link text-zinc-300 hover:text-amber-300 text-left disabled:opacity-60"
               >
                 {t('nav.logout')}
               </button>
@@ -182,13 +237,54 @@ export default function Header({ user, loading }: HeaderProps) {
           ) : (
             <Link
               href="/login"
-              className="nav-link text-amber-300 hover:text-amber-200"
+              onClick={handleNavTap}
+              className={`nav-link text-amber-300 hover:text-amber-200 ${
+                isNavigating ? 'pointer-events-none opacity-70' : ''
+              }`}
             >
               {t('auth.login')}
             </Link>
           )}
         </nav>
       </div>
+
+      {/* Reemplaza el onClick del botón/link "Salir" */}
+      {/* Antes: onClick={performLogout} */}
+      {/* Ahora: */}
+      {/* <button onClick={onClickLogout}>Salir</button> */}
+
+      {/* Modal inline de confirmación */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-amber-500/30 bg-zinc-900 text-zinc-100 p-5 shadow-2xl">
+            <h2 className="text-lg font-semibold text-amber-300">
+              ¿Seguro que quieres salir de la cuenta?
+            </h2>
+            <p className="mt-2 text-sm text-zinc-300">
+              Se cerrará la sesión actual en este dispositivo.
+            </p>
+
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={onCancelLogout}
+                disabled={logoutLoading}
+                className="rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-700 disabled:opacity-60"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={onConfirmLogout}
+                disabled={logoutLoading}
+                className="rounded-xl border border-amber-400/60 bg-amber-500/15 px-4 py-3 text-sm font-medium text-amber-300 transition-colors hover:bg-amber-500/25 disabled:opacity-60"
+              >
+                {logoutLoading ? 'Saliendo...' : 'Sí, salir'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
