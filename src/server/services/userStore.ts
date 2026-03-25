@@ -19,6 +19,8 @@ const hasRedis =
   !!process.env.UPSTASH_REDIS_REST_URL &&
   !!process.env.UPSTASH_REDIS_REST_TOKEN;
 
+const isVercelRuntime = !!process.env.VERCEL;
+
 const localFile = path.join(process.cwd(), '.data', 'users.json');
 const redis = hasRedis
   ? new Redis({
@@ -26,6 +28,15 @@ const redis = hasRedis
       token: process.env.UPSTASH_REDIS_REST_TOKEN!,
     })
   : null;
+
+function ensurePersistentStorageForVercel() {
+  // In Vercel filesystem is ephemeral; without Redis users will disappear on deploy/cold starts.
+  if (isVercelRuntime && !redis) {
+    throw new Error(
+      'Persistent user storage is not configured in Vercel. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.'
+    );
+  }
+}
 
 async function readLocalUsers(): Promise<StoredUser[]> {
   try {
@@ -42,6 +53,7 @@ async function writeLocalUsers(users: StoredUser[]): Promise<void> {
 }
 
 export async function listUsersStore(): Promise<StoredUser[]> {
+  ensurePersistentStorageForVercel();
   if (redis) {
     const emails = (await redis.smembers<string[]>('users:index')) ?? [];
     if (!emails.length) return [];
@@ -54,6 +66,7 @@ export async function listUsersStore(): Promise<StoredUser[]> {
 }
 
 export async function getUserByEmailStore(email: string): Promise<StoredUser | null> {
+  ensurePersistentStorageForVercel();
   const normalized = email.trim().toLowerCase();
   if (redis) {
     return (await redis.get<StoredUser>(`user:${normalized}`)) ?? null;
@@ -63,11 +76,13 @@ export async function getUserByEmailStore(email: string): Promise<StoredUser | n
 }
 
 export async function getUserByIdStore(id: string): Promise<StoredUser | null> {
+  ensurePersistentStorageForVercel();
   const users = await listUsersStore();
   return users.find((user) => user.id === id) ?? null;
 }
 
 export async function upsertUserStore(user: StoredUser): Promise<void> {
+  ensurePersistentStorageForVercel();
   const normalized = user.email.trim().toLowerCase();
   const now = new Date().toISOString();
   const payload: StoredUser = { ...user, email: normalized, updatedAt: now, createdAt: user.createdAt || now };
@@ -86,6 +101,7 @@ export async function upsertUserStore(user: StoredUser): Promise<void> {
 }
 
 export async function deleteUserStore(email: string): Promise<void> {
+  ensurePersistentStorageForVercel();
   const normalized = email.trim().toLowerCase();
 
   if (redis) {
