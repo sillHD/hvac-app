@@ -33,7 +33,7 @@ import { logAuditEvent } from '../../../server/services/audit';
 import { sendLoginLockoutAlert } from '../../../server/services/securityAlerts';
 
 // POST /api/auth/login
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).end('Method Not Allowed');
@@ -65,7 +65,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(429).json({ error: `Too many attempts. Retry in ${rate.blockedSeconds}s` });
   }
 
-  const auth = signIn(email, password);
+  const auth = await signIn(email, password);
   if (!auth) {
     registerLoginFailure(rate.emailKey, rate.ipKey);
     const nextRate = getLoginRateLimitStatus(email, ip);

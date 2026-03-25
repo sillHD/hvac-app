@@ -11,7 +11,7 @@ import { verifyToken } from '../../../server/auth';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Only allow admin users to access this diagnostic endpoint
   const token = req.headers.authorization?.replace('Bearer ', '');
-  const user = token ? verifyToken(token) : null;
+  const user = token ? await verifyToken(token) : null;
   if (!user || user.role !== 'admin') {
     return res.status(403).json({ error: 'Forbidden' });
   }

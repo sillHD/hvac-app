@@ -62,6 +62,11 @@ export async function getUserByEmailStore(email: string): Promise<StoredUser | n
   return users.find((u) => u.email.toLowerCase() === normalized) ?? null;
 }
 
+export async function getUserByIdStore(id: string): Promise<StoredUser | null> {
+  const users = await listUsersStore();
+  return users.find((user) => user.id === id) ?? null;
+}
+
 export async function upsertUserStore(user: StoredUser): Promise<void> {
   const normalized = user.email.trim().toLowerCase();
   const now = new Date().toISOString();

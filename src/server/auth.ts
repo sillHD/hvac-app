@@ -1,27 +1,13 @@
-/**
- * auth.ts — Capa de autenticación del servidor.
- *
- * Responsabilidades:
- *  - Mantener el store en memoria de usuarios (inicializado desde variables de entorno).
- *  - Verificar tokens de sesión (formato: "user:<id>:<issuedAtMs>").
- *  - Firmar nuevos tokens al hacer login (signIn).
- *  - CRUD de usuarios gestionados (create/update/delete).
- *  - Helpers de autorización por rol (canViewAllReports, etc.).
- *
- * IMPORTANTE — Seguridad:
- *  - Los tokens son simples strings en memoria; en producción usar JWT firmado o sesiones de BD.
- *  - Las contraseñas se comparan en texto plano; en producción usar bcrypt/argon2.
- *  - Los usuarios se cargan desde variables de entorno al primer uso; si la variable está vacía,
- *    ese usuario no es registrado (el root queda desactivado si ROOT_USER_PASSWORD no está set).
- *
- * Variables de entorno requeridas (en .env.local):
- *   ROOT_USER_PASSWORD     — Contraseña del usuario root (ismaelcorra@gmail.com)
- *   ADMIN_CAROL_PASSWORD   — Contraseña de la admin Carol
- *   TECH_ALICE_PASSWORD    — Contraseña de la técnica Alice
- *   TECH_BOB_PASSWORD      — Contraseña del técnico Bob
- */
-
-// Server-side authentication helpers
+import type { NextApiRequest } from 'next';
+import {
+  deleteUserStore,
+  getUserByEmailStore,
+  getUserByIdStore,
+  listUsersStore,
+  type Role as StoreRole,
+  type StoredUser as PersistedUser,
+  upsertUserStore,
+} from './services/userStore';
 
 export interface User {
   id: string;
@@ -30,109 +16,176 @@ export interface User {
   role: 'technician' | 'admin' | 'root';
 }
 
-/** Usuario almacenado internamente (incluye contraseña, nunca exponer al cliente) */
-interface StoredUser extends User {
-  password: string;
-  disabled: boolean;
-}
-
-/** Usuario público para gestión desde el panel de administración */
 export interface ManagedUser extends User {
   disabled: boolean;
 }
 
-/** Duración máxima de un token de sesión: 12 horas */
 const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
 
-let warnedMissingRootPassword = false;
-let initializedUsers = false;
-let userStore: StoredUser[] = [];
+let seedPromise: Promise<void> | null = null;
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-function nextUserId(): string {
-  const max = userStore.reduce((acc, u) => Math.max(acc, Number.parseInt(u.id, 10) || 0), 0);
-  return String(max + 1);
+function mapStoreRoleToUserRole(role: StoreRole): User['role'] {
+  return role === 'tech' ? 'technician' : role;
 }
 
-function initUsers() {
-  if (initializedUsers) return;
+function mapUserRoleToStoreRole(role: User['role']): StoreRole {
+  return role === 'technician' ? 'tech' : role;
+}
 
-  const rootPassword = process.env.ROOT_USER_PASSWORD || '';
-  const adminCarolPassword = process.env.ADMIN_CAROL_PASSWORD || '';
-  const techAlicePassword = process.env.TECH_ALICE_PASSWORD || '';
-  const techBobPassword = process.env.TECH_BOB_PASSWORD || '';
+function toPublicUser(user: PersistedUser): User {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: mapStoreRoleToUserRole(user.role),
+  };
+}
 
-  if (!rootPassword && !warnedMissingRootPassword) {
-    warnedMissingRootPassword = true;
-    console.warn('[auth] ROOT_USER_PASSWORD is not configured; root login is disabled until it is set.');
-  }
+function toManagedUser(user: PersistedUser): ManagedUser {
+  return {
+    ...toPublicUser(user),
+    disabled: !user.active,
+  };
+}
 
-  const configured: StoredUser[] = [
-    { id: '0', email: 'ismaelcorra@gmail.com', password: rootPassword, role: 'root', disabled: false },
-    { id: '2', email: 'alice@hvac-example.com', password: techAlicePassword, role: 'technician', disabled: false },
-    { id: '3', email: 'bob@hvac-example.com', password: techBobPassword, role: 'technician', disabled: false },
-    { id: '4', email: 'carol@hvac-example.com', password: adminCarolPassword, role: 'admin', disabled: false },
+async function nextUserId(): Promise<string> {
+  const users = await listUsersStore();
+  const maxId = users.reduce((highest, current) => {
+    const numericId = Number.parseInt(current.id, 10);
+    return Number.isFinite(numericId) ? Math.max(highest, numericId) : highest;
+  }, 0);
+  return String(maxId + 1);
+}
+
+async function ensureSeedUsers(): Promise<void> {
+  const seeds: Array<{
+    id: string;
+    email: string;
+    password: string;
+    role: StoreRole;
+    name: string;
+  }> = [
+    {
+      id: '0',
+      email: 'ismaelcorra@gmail.com',
+      password: process.env.ROOT_USER_PASSWORD || '',
+      role: 'root',
+      name: 'Root',
+    },
+    {
+      id: '2',
+      email: 'alice@hvac-example.com',
+      password: process.env.TECH_ALICE_PASSWORD || '',
+      role: 'tech',
+      name: 'Alice',
+    },
+    {
+      id: '3',
+      email: 'bob@hvac-example.com',
+      password: process.env.TECH_BOB_PASSWORD || '',
+      role: 'tech',
+      name: 'Bob',
+    },
+    {
+      id: '4',
+      email: 'carol@hvac-example.com',
+      password: process.env.ADMIN_CAROL_PASSWORD || '',
+      role: 'admin',
+      name: 'Carol',
+    },
   ];
 
-  userStore = configured
-    .filter((u) => !!u.password)
-    .map((u) => ({ ...u, email: normalizeEmail(u.email) }));
-  initializedUsers = true;
+  for (const seed of seeds) {
+    if (!seed.password) continue;
+    const existing = await getUserByEmailStore(seed.email);
+    if (existing) continue;
+
+    const timestamp = new Date().toISOString();
+    await upsertUserStore({
+      id: seed.id,
+      email: normalizeEmail(seed.email),
+      name: seed.name,
+      role: seed.role,
+      passwordHash: seed.password,
+      active: true,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+  }
 }
 
-function getUsers(): StoredUser[] {
-  initUsers();
-  return userStore;
+async function ensureUsersReady(): Promise<void> {
+  if (!seedPromise) {
+    seedPromise = ensureSeedUsers().catch((error) => {
+      seedPromise = null;
+      throw error;
+    });
+  }
+  await seedPromise;
 }
 
-export function verifyToken(token: string): User | null {
-  // simple prototype: token can be user:<id> or user:<id>:<issuedAtMs>
+async function getActiveUserByEmail(email: string): Promise<PersistedUser | null> {
+  await ensureUsersReady();
+  const storedUser = await getUserByEmailStore(email);
+  if (!storedUser || !storedUser.active) return null;
+  return storedUser;
+}
+
+export async function verifyToken(token: string): Promise<User | null> {
   if (!token || !token.startsWith('user:')) return null;
+
   const parts = token.split(':');
-  const id = parts[1];
+  const userId = parts[1];
   const issuedAtMs = Number(parts[2] || '0');
+
   if (issuedAtMs > 0 && Date.now() - issuedAtMs > TOKEN_TTL_MS) {
     return null;
   }
-  const users = getUsers();
-  const u = users.find((u) => u.id === id && !u.disabled);
-  return u ? { id: u.id, email: u.email, role: u.role } : null;
+
+  await ensureUsersReady();
+  const storedUser = await getUserByIdStore(userId);
+  if (!storedUser || !storedUser.active) return null;
+
+  return toPublicUser(storedUser);
 }
 
-export function signIn(email: string, password: string): { token: string; user: User } | null {
-  const users = getUsers();
-  const normalizedEmail = normalizeEmail(email);
-  const u = users.find((u) => !u.disabled && u.email === normalizedEmail && u.password === password);
-  if (!u) return null;
-  // in real app generate JWT/secure session
-  const token = `user:${u.id}:${Date.now()}`;
-  return { token, user: { id: u.id, email: u.email, role: u.role } };
+export async function signIn(email: string, password: string): Promise<{ token: string; user: User } | null> {
+  const storedUser = await getActiveUserByEmail(email);
+  if (!storedUser) return null;
+  if (storedUser.passwordHash !== password) return null;
+
+  const token = `user:${storedUser.id}:${Date.now()}`;
+  return {
+    token,
+    user: toPublicUser(storedUser),
+  };
 }
 
-export function canRecoverPassword(email: string): boolean {
-  const users = getUsers();
-  const normalizedEmail = normalizeEmail(email);
-  return users.some((u) => !u.disabled && u.email === normalizedEmail);
+export async function signInWithPassword(email: string, password: string) {
+  return signIn(email, password);
 }
 
-export function listManagedUsers(): ManagedUser[] {
-  return getUsers().map((u) => ({
-    id: u.id,
-    email: u.email,
-    role: u.role,
-    disabled: u.disabled,
-  }));
+export async function canRecoverPassword(email: string): Promise<boolean> {
+  return !!(await getActiveUserByEmail(email));
 }
 
-export function createUser(input: {
+export async function listManagedUsers(): Promise<ManagedUser[]> {
+  await ensureUsersReady();
+  const users = await listUsersStore();
+  return users.map(toManagedUser).sort((left, right) => left.email.localeCompare(right.email));
+}
+
+export async function createUser(input: {
   email: string;
   role: User['role'];
   password: string;
   disabled?: boolean;
-}): ManagedUser {
+  name?: string;
+}): Promise<ManagedUser> {
   const email = normalizeEmail(input.email);
   if (!email || !input.password) {
     throw new Error('Email and password are required');
@@ -140,57 +193,95 @@ export function createUser(input: {
   if (input.role === 'root') {
     throw new Error('No se permite crear otro usuario root');
   }
-  if (getUsers().some((u) => u.email === email)) {
+
+  await ensureUsersReady();
+  if (await getUserByEmailStore(email)) {
     throw new Error('User already exists');
   }
 
-  const created: StoredUser = {
-    id: nextUserId(),
+  const timestamp = new Date().toISOString();
+  const createdUser: PersistedUser = {
+    id: await nextUserId(),
     email,
-    role: input.role,
-    password: input.password,
-    disabled: !!input.disabled,
+    name: input.name || email,
+    role: mapUserRoleToStoreRole(input.role),
+    passwordHash: input.password,
+    active: !input.disabled,
+    createdAt: timestamp,
+    updatedAt: timestamp,
   };
-  userStore.push(created);
-  return { id: created.id, email: created.email, role: created.role, disabled: created.disabled };
+
+  await upsertUserStore(createdUser);
+  return toManagedUser(createdUser);
 }
 
-export function updateUser(
+export async function updateUser(
   id: string,
-  patch: Partial<{ email: string; role: User['role']; password: string; disabled: boolean }>
-): ManagedUser | null {
-  const idx = getUsers().findIndex((u) => u.id === id);
-  if (idx < 0) return null;
+  patch: Partial<{ email: string; role: User['role']; password: string; disabled: boolean; name: string }>
+): Promise<ManagedUser | null> {
+  await ensureUsersReady();
+  const current = await getUserByIdStore(id);
+  if (!current) return null;
 
-  const current = userStore[idx];
   const nextEmail = patch.email ? normalizeEmail(patch.email) : current.email;
-  const emailTakenByOther = userStore.some((u) => u.id !== id && u.email === nextEmail);
-  if (emailTakenByOther) {
+  const sameEmailUser = await getUserByEmailStore(nextEmail);
+  if (sameEmailUser && sameEmailUser.id !== id) {
     throw new Error('Email already in use');
   }
 
-  if (current.role === 'root') {
+  const currentRole = mapStoreRoleToUserRole(current.role);
+  if (currentRole === 'root') {
     if (patch.disabled === true) throw new Error('Root user cannot be blocked');
     if (patch.role && patch.role !== 'root') throw new Error('Root role cannot be changed');
   }
-  if (current.role !== 'root' && patch.role === 'root') {
+  if (currentRole !== 'root' && patch.role === 'root') {
     throw new Error('No se permite asignar el rol root');
   }
 
-  const updated: StoredUser = {
+  const updated: PersistedUser = {
     ...current,
     email: nextEmail,
-    role: patch.role ?? current.role,
-    disabled: patch.disabled ?? current.disabled,
-    password: patch.password ?? current.password,
+    name: patch.name ?? current.name,
+    role: patch.role ? mapUserRoleToStoreRole(patch.role) : current.role,
+    passwordHash: patch.password ?? current.passwordHash,
+    active: patch.disabled !== undefined ? !patch.disabled : current.active,
+    updatedAt: new Date().toISOString(),
   };
 
-  userStore[idx] = updated;
-  return { id: updated.id, email: updated.email, role: updated.role, disabled: updated.disabled };
+  if (current.email !== nextEmail) {
+    await deleteUserStore(current.email);
+  }
+  await upsertUserStore(updated);
+  return toManagedUser(updated);
 }
 
-export async function deleteUser(email: string) {
-  await deleteUserStore(email);
+export async function deleteUser(id: string): Promise<boolean> {
+  await ensureUsersReady();
+  const current = await getUserByIdStore(id);
+  if (!current) return false;
+  if (current.role === 'root') {
+    throw new Error('Root user cannot be deleted');
+  }
+
+  await deleteUserStore(current.email);
+  return true;
+}
+
+export async function listUsers() {
+  await ensureUsersReady();
+  return listUsersStore();
+}
+
+export async function saveUser(user: PersistedUser) {
+  await ensureUsersReady();
+  await upsertUserStore(user);
+}
+
+export async function getAuthenticatedUserFromRequest(req: NextApiRequest): Promise<User | null> {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : '';
+  if (!token) return null;
+  return verifyToken(token);
 }
 
 export function canViewAllReports(role: User['role']): boolean {
@@ -203,38 +294,4 @@ export function canEditOrDeleteReports(role: User['role']): boolean {
 
 export function canTechnicianEditOwnReports(role: User['role']): boolean {
   return role === 'technician';
-}
-
-// LOGIN
-export async function signInWithPassword(email: string, password: string): Promise<{ token: string; user: User } | null> {
-  const user = await getUserByEmailStore(email);
-  if (!user) return null;
-
-  // TODO: validar passwordHash correctamente
-  const token = `user:${user.id}:${Date.now()}`;
-  return {
-    token,
-    user: { id: user.id, email: user.email, role: mapStoreRoleToUserRole(user.role) },
-  };
-}
-
-// LISTAR USUARIOS
-export async function listUsers() {
-  return listUsersStore();
-}
-
-// CREAR/EDITAR USUARIO
-export async function saveUser(user: any) {
-  await upsertUserStore(user);
-}
-
-import {
-  deleteUserStore,
-  getUserByEmailStore,
-  listUsersStore,
-  upsertUserStore,
-} from './services/userStore';
-
-function mapStoreRoleToUserRole(role: 'root' | 'admin' | 'tech'): User['role'] {
-  return role === 'tech' ? 'technician' : role;
 }

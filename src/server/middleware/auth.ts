@@ -19,9 +19,9 @@ import { verifyToken } from '../auth';
 
 /** Envuelve un handler de API exigiendo autenticación válida */
 export function withAuth(handler: NextApiHandler) {
-  return (req: NextApiRequest, res: NextApiResponse) => {
+  return async (req: NextApiRequest, res: NextApiResponse) => {
     const token = req.headers.authorization?.replace('Bearer ', '');
-    const user = token ? verifyToken(token) : null;
+    const user = token ? await verifyToken(token) : null;
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }

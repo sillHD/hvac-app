@@ -35,12 +35,12 @@ function parseRole(value: unknown): User['role'] | null {
   return null;
 }
 
-function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const actor = (req as any).user as User;
 
   if (req.method === 'GET') {
-    return res.status(200).json({ users: listManagedUsers() });
+    return res.status(200).json({ users: await listManagedUsers() });
   }
 
   if (req.method === 'POST') {
@@ -51,7 +51,7 @@ function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     try {
-      const user = createUser({
+      const user = await createUser({
         email: String(email),
         password: String(password),
         role: parsedRole,
@@ -87,7 +87,7 @@ function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     try {
-      const updated = updateUser(String(id), {
+      const updated = await updateUser(String(id), {
         email: typeof email === 'string' ? email : undefined,
         role: parsedRole,
         password: typeof password === 'string' && password.length > 0 ? password : undefined,
@@ -125,7 +125,7 @@ function handler(req: NextApiRequest, res: NextApiResponse) {
     }
 
     try {
-      const removed = deleteUser(id);
+      const removed = await deleteUser(id);
       if (!removed) {
         return res.status(404).json({ error: 'User not found' });
       }
