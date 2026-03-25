@@ -53,9 +53,15 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       } else {
         const data = await res.json();
         if (data.token) {
-          // store token temporarily; real apps should use HttpOnly cookie
           localStorage.setItem('token', data.token);
         }
+
+        // Redirección única al dashboard (sin bucle)
+        if (typeof window !== 'undefined') {
+          window.location.assign('/dashboard');
+          return;
+        }
+
         onSuccess?.();
       }
     } catch (err) {

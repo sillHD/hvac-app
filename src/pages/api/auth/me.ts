@@ -1,5 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getAuthenticatedUserFromRequest } from '../../utils/auth';
+import * as Auth from '../../../server/auth';
+
+function pickAuthReader() {
+  const a = Auth as any;
+  return (
+    a.getAuthenticatedUserFromRequest ||
+    a.getUserFromRequest ||
+    a.getCurrentUserFromRequest ||
+    a.getCurrentUser ||
+    a.requireAuth
+  );
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -7,8 +18,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Debe devolver null/undefined si no hay sesión válida
-    const user = await getAuthenticatedUserFromRequest(req);
+    const reader = pickAuthReader();
+
+    if (typeof reader !== 'function') {
+      return res.status(503).json({ error: 'auth_reader_not_configured' });
+    }
+
+    const user = await (reader.length >= 2 ? reader(req, res) : reader(req));
 
     if (!user) {
       return res.status(401).json({ error: 'unauthorized' });
@@ -16,7 +32,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({ user });
   } catch (err: any) {
-    // Token inválido/expirado => 401
     if (
       err?.name === 'TokenExpiredError' ||
       err?.name === 'JsonWebTokenError' ||
@@ -25,7 +40,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: 'unauthorized' });
     }
 
-    // Error temporal (DB/red/proveedor) => NO 401
     return res.status(503).json({ error: 'temporarily_unavailable' });
   }
 }

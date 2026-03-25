@@ -34,48 +34,14 @@ interface HeaderProps {
 export default function Header({ user, loading }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const [resolvedUser, setResolvedUser] = useState<User | null>(user);
   const router = useRouter();
   const { locale, setLocale, t } = useI18n();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
 
-  // Sincroniza cuando el prop user cambie
-  useEffect(() => {
-    setResolvedUser(user);
-  }, [user]);
+  const effectiveUser = user;
 
-  // Fallback: si user viene null tras login, revalida sesión en cliente
-  useEffect(() => {
-    if (loading || user || router.pathname === '/login') return;
-
-    let mounted = true;
-    (async () => {
-      try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        const res = await fetch('/api/auth/me', {
-          method: 'GET',
-          credentials: 'include',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-
-        if (!res.ok) return;
-        const data = await res.json();
-        if (mounted && data?.user) setResolvedUser(data.user);
-      } catch {
-        // no-op
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, [loading, user, router.pathname]);
-
-  const effectiveUser = resolvedUser ?? user;
-
-  const canSeeLogs =
-    effectiveUser?.role === 'admin' || effectiveUser?.role === 'root';
+  const canSeeLogs = effectiveUser?.role === 'admin' || effectiveUser?.role === 'root';
   const canSeeUsers = effectiveUser?.role === 'root';
 
   const isActiveLink = (href: string) => {
@@ -108,6 +74,50 @@ export default function Header({ user, loading }: HeaderProps) {
     setIsNavigating(true);
     setMenuOpen(false);
   };
+
+  const toggleMenu = () => {
+    if (isNavigating) return;
+    setMenuOpen((prev) => !prev);
+  };
+
+  const onClickLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const onCancelLogout = () => {
+    if (logoutLoading) return;
+    setShowLogoutConfirm(false);
+  };
+
+  const onConfirmLogout = async () => {
+    try {
+      setLogoutLoading(true);
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        window.location.assign('/login'); // una sola navegación
+      }
+    } finally {
+      setLogoutLoading(false);
+      setShowLogoutConfirm(false);
+    }
+  };
+
+  const commonLinks = [
+    { href: '/dashboard', label: t('nav.dashboard') },
+    { href: '/customers', label: t('nav.customers') },
+    { href: '/reports', label: t('nav.newInvoice') },
+    { href: '/quotes', label: t('nav.newQuote') },
+    { href: '/reports/status', label: t('nav.status') },
+    { href: '/history', label: t('nav.history') },
+  ];
+
+  const adminLinks = [{ href: '/logs', label: t('nav.logs') }];
+  const rootLinks = [{ href: '/admin/users', label: t('nav.users') }];
 
   return (
     <header>
