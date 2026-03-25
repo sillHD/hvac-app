@@ -28,10 +28,10 @@ import { useI18n } from '../i18n/I18nProvider';
 
 interface HeaderProps {
   user: User | null;
-  loading: boolean;
+  loading?: boolean;
 }
 
-export default function Header({ user, loading }: HeaderProps) {
+export default function Header({ user, loading = false }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
@@ -158,12 +158,15 @@ export default function Header({ user, loading }: HeaderProps) {
         </button>
 
         <nav
-          className={`${
-            menuOpen ? 'block' : 'hidden'
-          } sm:flex sm:items-center sm:justify-end sm:flex-1 w-full sm:w-auto mt-3 sm:mt-0`}
+          className={`${menuOpen ? 'block' : 'hidden'} sm:flex sm:items-center sm:justify-end sm:flex-1 w-full sm:w-auto mt-3 sm:mt-0`}
         >
-          {loading ? null : effectiveUser ? (
-            <div className="nav-shell-mobile sm:nav-shell flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-1 w-full sm:w-auto">
+          {loading ? null : user ? (
+            <div className="nav-shell-mobile sm:nav-shell flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-1 w-full sm:w-auto">
+              <div className="rounded-xl border border-amber-500/30 bg-zinc-900/80 px-3 py-2 text-xs">
+                <div className="text-zinc-200 font-semibold">{user.name || user.email}</div>
+                <div className="text-amber-300 uppercase tracking-wide">{user.role}</div>
+              </div>
+
               {commonLinks.map((link) => (
                 <Link
                   key={link.href}

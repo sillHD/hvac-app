@@ -209,3 +209,27 @@ export function canEditOrDeleteReports(role: User['role']): boolean {
 export function canTechnicianEditOwnReports(role: User['role']): boolean {
   return role === 'technician';
 }
+
+// LOGIN
+export async function signInWithPassword(email: string, password: string): { token: string; user: User } | null {
+  const user = await getUserByEmailStore(email);
+  // validar passwordHash como ya lo haces hoy
+  if (!user) return null;
+  const token = `user:${user.id}:${Date.now()}`;
+  return { token, user: { id: user.id, email: user.email, role: user.role } };
+}
+
+// LISTAR USUARIOS
+export async function listUsers() {
+  return listUsersStore();
+}
+
+// CREAR/EDITAR USUARIO
+export async function saveUser(user: any) {
+  await upsertUserStore(user);
+}
+
+// ELIMINAR USUARIO
+export async function deleteUser(email: string) {
+  await deleteUserStore(email);
+}
