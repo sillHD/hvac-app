@@ -62,7 +62,7 @@ export default function AdminUsersPage() {
   }, [t]);
 
   useEffect(() => {
-    if (!loading && user?.role === 'root') {
+    if (!loading && (user?.role === 'root' || user?.role === 'admin')) {
       loadUsers();
     }
   }, [loading, user?.role, loadUsers]);
@@ -155,13 +155,15 @@ export default function AdminUsersPage() {
     return <p className="text-zinc-300 p-4">{t('ui.loading')}</p>;
   }
 
-  if (!user || user.role !== 'root') {
+  if (!user || (user.role !== 'root' && user.role !== 'admin')) {
     return (
       <Protected>
         <div className="premium-card p-4 text-zinc-300">{t('admin.onlyRoot')}</div>
       </Protected>
     );
   }
+
+  const isAdmin = user.role === 'admin';
 
   return (
     <Protected>
@@ -199,7 +201,7 @@ export default function AdminUsersPage() {
             className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-zinc-100"
           >
             <option value="technician">technician</option>
-            <option value="admin">admin</option>
+            {!isAdmin && <option value="admin">admin</option>}
           </select>
           <button
             type="submit"
@@ -227,7 +229,7 @@ export default function AdminUsersPage() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    disabled={saving || managedUser.role === 'root'}
+                    disabled={saving || managedUser.role === 'root' || (isAdmin && managedUser.role !== 'technician')}
                     onClick={() => patchUser(managedUser.id, { disabled: !managedUser.disabled })}
                     className="px-3 py-1 text-xs rounded-full bg-zinc-500/20 text-zinc-200 hover:bg-zinc-500/35 disabled:opacity-40"
                   >
@@ -235,13 +237,13 @@ export default function AdminUsersPage() {
                   </button>
                   <button
                     type="button"
-                    disabled={saving}
+                    disabled={saving || (isAdmin && managedUser.role !== 'technician')}
                     onClick={() => handleChangePassword(managedUser.id)}
                     className="px-3 py-1 text-xs rounded-full bg-amber-500/20 text-amber-300 hover:bg-amber-500/35 disabled:opacity-40"
                   >
                     {t('admin.changePassword')}
                   </button>
-                  {managedUser.role === 'root' ? (
+                  {managedUser.role === 'root' || (isAdmin && managedUser.role === 'admin') ? (
                     <span className="px-3 py-1 text-xs rounded-full bg-zinc-700/30 text-zinc-300">
                       {t('admin.fixedRoleRoot')}
                     </span>
@@ -258,7 +260,7 @@ export default function AdminUsersPage() {
                         className="px-3 py-1 text-xs rounded-full bg-black/20 border border-white/10 text-zinc-100"
                       >
                         <option value="technician">technician</option>
-                        <option value="admin">admin</option>
+                        {!isAdmin && <option value="admin">admin</option>}
                       </select>
                       <button
                         type="button"
@@ -272,7 +274,7 @@ export default function AdminUsersPage() {
                   )}
                   <button
                     type="button"
-                    disabled={saving || managedUser.role === 'root'}
+                    disabled={saving || managedUser.role === 'root' || (isAdmin && managedUser.role !== 'technician')}
                     onClick={() => handleDelete(managedUser.id)}
                     className="px-3 py-1 text-xs rounded-full bg-red-500/20 text-red-300 hover:bg-red-500/35 disabled:opacity-40"
                   >

@@ -16,16 +16,19 @@ export interface StoredUser {
 }
 
 const hasRedis =
-  !!process.env.UPSTASH_REDIS_REST_URL &&
-  !!process.env.UPSTASH_REDIS_REST_TOKEN;
+  !!(process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL) &&
+  !!(process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN);
 
 const isVercelRuntime = !!process.env.VERCEL;
+
+const redisRestUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const redisRestToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 
 const localFile = path.join(process.cwd(), '.data', 'users.json');
 const redis = hasRedis
   ? new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+      url: redisRestUrl!,
+      token: redisRestToken!,
     })
   : null;
 
@@ -33,7 +36,7 @@ function ensurePersistentStorageForVercel() {
   // In Vercel filesystem is ephemeral; without Redis users will disappear on deploy/cold starts.
   if (isVercelRuntime && !redis) {
     throw new Error(
-      'Persistent user storage is not configured in Vercel. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.'
+      'Persistent user storage is not configured in Vercel. Set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN or KV_REST_API_URL + KV_REST_API_TOKEN.'
     );
   }
 }

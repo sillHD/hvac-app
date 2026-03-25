@@ -25,7 +25,7 @@ import {
   type User,
 } from '../../../server/auth';
 import { withAuth } from '../../../server/middleware/auth';
-import { requireRole } from '../../../server/middleware/permissions';
+import { requireAnyRole } from '../../../server/middleware/permissions';
 import { logAuditEvent } from '../../../server/services/audit';
 
 function parseRole(value: unknown): User['role'] | null {
@@ -38,6 +38,7 @@ function parseRole(value: unknown): User['role'] | null {
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const actor = (req as any).user as User;
+  const isAdmin = actor.role === 'admin';
 
   if (req.method === 'GET') {
     return res.status(200).json({ users: await listManagedUsers() });
@@ -48,6 +49,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const parsedRole = parseRole(role);
     if (!email || !password || !parsedRole) {
       return res.status(400).json({ error: 'Email, role and password are required' });
+    }
+    // Los admins solo pueden crear técnicos
+    if (isAdmin && parsedRole !== 'technician') {
+      return res.status(403).json({ error: 'Admins can only create technician users' });
     }
 
     try {
@@ -77,11 +82,24 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: 'User id is required' });
     }
 
+    // Los admins solo pueden editar técnicos
+    if (isAdmin) {
+      const allUsers = await listManagedUsers();
+      const target = allUsers.find((u) => u.id === String(id));
+      if (!target || target.role !== 'technician') {
+        return res.status(403).json({ error: 'Admins can only edit technician users' });
+      }
+    }
+
     let parsedRole: User['role'] | undefined;
     if (role !== undefined) {
       const roleCandidate = parseRole(role);
       if (!roleCandidate) {
         return res.status(400).json({ error: 'Invalid role' });
+      }
+      // Los admins no pueden ascender a nadie a admin
+      if (isAdmin && roleCandidate !== 'technician') {
+        return res.status(403).json({ error: 'Admins can only assign the technician role' });
       }
       parsedRole = roleCandidate;
     }
@@ -124,6 +142,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: 'User id is required' });
     }
 
+    // Los admins solo pueden borrar técnicos
+    if (isAdmin) {
+      const allUsers = await listManagedUsers();
+      const target = allUsers.find((u) => u.id === id);
+      if (!target || target.role !== 'technician') {
+        return res.status(403).json({ error: 'Admins can only delete technician users' });
+      }
+    }
+
     try {
       const removed = await deleteUser(id);
       if (!removed) {
@@ -146,4 +173,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   return res.status(405).end('Method Not Allowed');
 }
 
-export default withAuth(requireRole('root', handler));
+export default withAuth(requireAnyRole(['admin', 'root'], handler));
