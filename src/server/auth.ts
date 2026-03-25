@@ -205,12 +205,16 @@ export function canTechnicianEditOwnReports(role: User['role']): boolean {
 }
 
 // LOGIN
-export async function signInWithPassword(email: string, password: string): { token: string; user: User } | null {
+export async function signInWithPassword(email: string, password: string): Promise<{ token: string; user: User } | null> {
   const user = await getUserByEmailStore(email);
-  // validar passwordHash como ya lo haces hoy
   if (!user) return null;
+
+  // TODO: validar passwordHash correctamente
   const token = `user:${user.id}:${Date.now()}`;
-  return { token, user: { id: user.id, email: user.email, role: user.role } };
+  return {
+    token,
+    user: { id: user.id, email: user.email, role: mapStoreRoleToUserRole(user.role) },
+  };
 }
 
 // LISTAR USUARIOS
@@ -221,4 +225,15 @@ export async function listUsers() {
 // CREAR/EDITAR USUARIO
 export async function saveUser(user: any) {
   await upsertUserStore(user);
+}
+
+import {
+  deleteUserStore,
+  getUserByEmailStore,
+  listUsersStore,
+  upsertUserStore,
+} from './services/userStore';
+
+function mapStoreRoleToUserRole(role: 'root' | 'admin' | 'tech'): User['role'] {
+  return role === 'tech' ? 'technician' : role;
 }
