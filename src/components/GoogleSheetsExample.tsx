@@ -37,16 +37,24 @@ export default function GoogleSheetsExample() {
       {error && <p className="text-red-600">Error: {error}</p>}
       <button
         onClick={() => {
+          const jobPrice = 250;
+          const taxes = 6;
           const sample: GoogleFormInternal = {
             technician: 'Diego',
             customerName: 'Acme Co',
             customerEmail: 'contact@acme.example',
-            customerPhone: '555-1234',
-            serviceAddress: '123 Elm St',
+            customerPhone: '+1 (555) 123-4567',
+            serviceAddress: '123 Elm St, Miami, 33101',
             workType: 'Repair',
             workDescription: 'Fixed leaking unit',
-            jobPrice: 250,
+            jobPrice,
             depositTaken: false,
+            phone: '+1 (555) 123-4567',
+            street: '123 Elm St',
+            city: 'Miami',
+            zipCode: '33101',
+            taxes,
+            total: jobPrice + jobPrice * (taxes / 100),
           };
           sendData(sample);
         }}
