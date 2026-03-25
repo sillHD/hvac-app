@@ -188,14 +188,8 @@ export function updateUser(
   return { id: updated.id, email: updated.email, role: updated.role, disabled: updated.disabled };
 }
 
-export function deleteUser(id: string): boolean {
-  const idx = getUsers().findIndex((u) => u.id === id);
-  if (idx < 0) return false;
-  if (userStore[idx].role === 'root') {
-    throw new Error('Root user cannot be deleted');
-  }
-  userStore.splice(idx, 1);
-  return true;
+export async function deleteUser(email: string) {
+  await deleteUserStore(email);
 }
 
 export function canViewAllReports(role: User['role']): boolean {
@@ -227,9 +221,4 @@ export async function listUsers() {
 // CREAR/EDITAR USUARIO
 export async function saveUser(user: any) {
   await upsertUserStore(user);
-}
-
-// ELIMINAR USUARIO
-export async function deleteUser(email: string) {
-  await deleteUserStore(email);
 }
