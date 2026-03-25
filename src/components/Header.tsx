@@ -34,68 +34,60 @@ interface HeaderProps {
 export default function Header({ user, loading }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [resolvedUser, setResolvedUser] = useState<User | null>(user);
   const router = useRouter();
   const { locale, setLocale, t } = useI18n();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
 
-  const toggleMenu = () => {
-    if (isNavigating) return;
-    setMenuOpen((open) => !open);
-  };
+  // Sincroniza cuando el prop user cambie
+  useEffect(() => {
+    setResolvedUser(user);
+  }, [user]);
 
-  const performLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } catch (error) {
-      console.error('Logout failed', error);
-    } finally {
-      localStorage.removeItem('token');
-      setMenuOpen(false);
-      await router.replace('/login');
-    }
-  };
+  // Fallback: si user viene null tras login, revalida sesión en cliente
+  useEffect(() => {
+    if (loading || user || router.pathname === '/login') return;
 
-  const onClickLogout = () => {
-    setShowLogoutConfirm(true);
-  };
+    let mounted = true;
+    (async () => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        const res = await fetch('/api/auth/me', {
+          method: 'GET',
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
 
-  const onConfirmLogout = async () => {
-    try {
-      setLogoutLoading(true);
-      await performLogout();
-    } finally {
-      setLogoutLoading(false);
-      setShowLogoutConfirm(false);
-    }
-  };
+        if (!res.ok) return;
+        const data = await res.json();
+        if (mounted && data?.user) setResolvedUser(data.user);
+      } catch {
+        // no-op
+      }
+    })();
 
-  const onCancelLogout = () => {
-    if (logoutLoading) return;
-    setShowLogoutConfirm(false);
-  };
+    return () => {
+      mounted = false;
+    };
+  }, [loading, user, router.pathname]);
 
-  // navigation items available to all authenticated users
-  const commonLinks = [
-    { href: '/dashboard', label: t('nav.dashboard') },
-    { href: '/customers', label: t('nav.customers') },
-    { href: '/reports', label: t('nav.newInvoice') },
-    { href: '/quotes', label: t('nav.newQuote') },
-    { href: '/reports/status', label: t('nav.status') },
-    { href: '/history', label: t('nav.history') },
-  ];
+  const effectiveUser = resolvedUser ?? user;
 
-  // admin-only
-  const adminLinks = [{ href: '/logs', label: t('nav.logs') }];
-  const rootLinks = [{ href: '/admin/users', label: t('nav.users') }];
-  const canSeeLogs = user?.role === 'admin' || user?.role === 'root';
-  const canSeeUsers = user?.role === 'root';
+  const canSeeLogs =
+    effectiveUser?.role === 'admin' || effectiveUser?.role === 'root';
+  const canSeeUsers = effectiveUser?.role === 'root';
 
   const isActiveLink = (href: string) => {
-    if (href === '/dashboard') {
-      return router.pathname === '/dashboard';
+    const path = router.pathname;
+
+    // Evita colisión: /reports NO debe activarse en /reports/status
+    if (href === '/reports') return path === '/reports';
+    if (href === '/reports/status') {
+      return path === '/reports/status' || path.startsWith('/reports/status/');
     }
-    return router.pathname === href || router.pathname.startsWith(`${href}/`);
+
+    return path === href || path.startsWith(`${href}/`);
   };
 
   useEffect(() => {
@@ -160,7 +152,7 @@ export default function Header({ user, loading }: HeaderProps) {
             menuOpen ? 'block' : 'hidden'
           } sm:flex sm:items-center sm:justify-end sm:flex-1 w-full sm:w-auto mt-3 sm:mt-0`}
         >
-          {loading ? null : user ? (
+          {loading ? null : effectiveUser ? (
             <div className="nav-shell-mobile sm:nav-shell flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-1 w-full sm:w-auto">
               {commonLinks.map((link) => (
                 <Link
