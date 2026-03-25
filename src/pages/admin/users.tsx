@@ -10,6 +10,7 @@ type AssignableRole = 'technician' | 'admin';
 interface ManagedUser {
   id: string;
   email: string;
+  name?: string;
   role: Role;
   disabled: boolean;
 }
@@ -22,6 +23,7 @@ export default function AdminUsersPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createForm, setCreateForm] = useState({
+    name: '',
     email: '',
     password: '',
     role: 'technician' as AssignableRole,
@@ -82,7 +84,7 @@ export default function AdminUsersPage() {
         setError(data.error || t('admin.createError'));
         return;
       }
-      setCreateForm({ email: '', password: '', role: 'technician' });
+      setCreateForm({ name: '', email: '', password: '', role: 'technician' });
       setUsers((prev) => [...prev, data.user]);
     } catch (err) {
       console.error(err);
@@ -176,13 +178,20 @@ export default function AdminUsersPage() {
 
         {error && <p className="text-red-400 text-sm">{error}</p>}
 
-        <form onSubmit={handleCreate} className="premium-card p-4 grid gap-3 sm:grid-cols-4">
+        <form onSubmit={handleCreate} className="premium-card p-4 grid gap-3 sm:grid-cols-5">
+          <input
+            type="text"
+            placeholder="Name"
+            value={createForm.name}
+            onChange={(e) => setCreateForm((prev) => ({ ...prev, name: e.target.value }))}
+            className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-zinc-100"
+          />
           <input
             type="email"
             placeholder={t('admin.emailPlaceholder')}
             value={createForm.email}
             onChange={(e) => setCreateForm((prev) => ({ ...prev, email: e.target.value }))}
-            className="sm:col-span-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-zinc-100"
+            className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-zinc-100"
             required
           />
           <input
@@ -221,7 +230,8 @@ export default function AdminUsersPage() {
             users.map((managedUser) => (
               <div key={managedUser.id} className="premium-card p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-zinc-100 font-semibold">{managedUser.email}</p>
+                  <p className="text-zinc-100 font-semibold">{managedUser.name || managedUser.email}</p>
+                  <p className="text-xs text-zinc-400">{managedUser.email}</p>
                   <p className="text-sm text-zinc-300">
                     {t('admin.role')}: {managedUser.role} · {t('admin.state')}: {managedUser.disabled ? t('admin.blocked') : t('admin.active')}
                   </p>

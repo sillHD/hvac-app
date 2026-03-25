@@ -31,6 +31,12 @@ interface JobFormProps {
   mode?: 'invoice' | 'quote';
 }
 
+interface TechnicianOption {
+  id: string;
+  name: string;
+  email: string;
+}
+
 type JobFormState = Omit<Job, 'id'> & {
   phone: string;
   street: string;
@@ -147,6 +153,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
   });
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [technicians, setTechnicians] = useState<TechnicianOption[]>([]);
 
   // customers + selection state
   const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
@@ -187,8 +194,62 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
     }
   }, [selectedCustomerId, customers]);
 
-  // technicians list (statically defined for now)
-  const technicians = ['Diego', 'Ángel'];
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadTechnicians() {
+      try {
+        const res = await fetch('/api/users/technicians', {
+          headers: getAuthHeaders(),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !Array.isArray(data.technicians)) {
+          return;
+        }
+
+        if (!isCancelled) {
+          setTechnicians(data.technicians as TechnicianOption[]);
+        }
+      } catch {
+        // Keep the fallback to current user below if this request fails.
+      }
+    }
+
+    loadTechnicians();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const defaultTechnicianName = user?.name || user?.email || '';
+    if (!defaultTechnicianName) return;
+
+    setTechnicians((current) => {
+      if (current.some((tech) => tech.name === defaultTechnicianName)) {
+        return current;
+      }
+      return [
+        ...current,
+        {
+          id: `self-${user?.email || 'unknown'}`,
+          name: defaultTechnicianName,
+          email: user?.email || '',
+        },
+      ];
+    });
+
+    setJob((current) =>
+      current.technicianName
+        ? current
+        : {
+            ...current,
+            technicianName: defaultTechnicianName,
+          }
+    );
+  }, [user?.name, user?.email]);
+
   const serviceTypes = ['Install', 'Repair', 'Maintenance', 'Diagnóstico'];
   const serviceTypeLabel = (value: string) => {
     if (value === 'Install') return 'Install';
@@ -404,9 +465,9 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
             className="mt-1 block w-full border rounded p-2"
           >
             <option value="">{t('form.selectOption')}</option>
-            {technicians.map((t) => (
-              <option key={t} value={t}>
-                {t}
+            {technicians.map((tech) => (
+              <option key={tech.id} value={tech.name}>
+                {tech.name}
               </option>
             ))}
           </select>

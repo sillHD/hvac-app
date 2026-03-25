@@ -2,10 +2,10 @@
  * api/admin/users.ts — Gestión de usuarios del sistema.
  *
  * Métodos: GET, POST, PATCH, DELETE
- * Acceso: Solo usuarios con rol 'root' (withAuth + requireRole('root'))
+ * Acceso: Usuarios con rol 'admin' o 'root'
  *
  * GET              — Lista todos los usuarios gestionados
- * POST             — Crea usuario (body: { email, role, password, disabled? })
+ * POST             — Crea usuario (body: { email, name?, role, password, disabled? })
  * PATCH            — Actualiza usuario (body: { id, email?, role?, password?, disabled? })
  * DELETE ?id=xxx   — Elimina usuario por ID
  *
@@ -45,7 +45,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (req.method === 'POST') {
-    const { email, role, password, disabled } = req.body || {};
+    const { email, name, role, password, disabled } = req.body || {};
     const parsedRole = parseRole(role);
     if (!email || !password || !parsedRole) {
       return res.status(400).json({ error: 'Email, role and password are required' });
@@ -58,6 +58,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
       const user = await createUser({
         email: String(email),
+        name: typeof name === 'string' ? name.trim() : undefined,
         password: String(password),
         role: parsedRole,
         disabled: Boolean(disabled),
@@ -68,7 +69,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         actorRole: actor.role,
         targetType: 'user',
         targetId: user.id,
-        details: { email: user.email, role: user.role },
+        details: { email: user.email, name: user.name, role: user.role },
       });
       return res.status(201).json({ user });
     } catch (error) {
