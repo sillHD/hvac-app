@@ -121,18 +121,23 @@ export default function Header({ user, loading = false }: HeaderProps) {
 
   return (
     <header>
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center">
-          <span className="block overflow-hidden">
-            <Image
-              src="/anc-logo.jpeg"
-              alt="ANC HVAC"
-              width={220}
-              height={72}
-              className="h-14 sm:h-[4.5rem] w-auto object-cover scale-[1.04]"
-              style={{ clipPath: 'inset(1px 1px 1px 1px)' }}
-            />
-          </span>
+      <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-3">
+        <Link
+          href={user ? '/dashboard' : '/login'}
+          className="flex items-center gap-3"
+          onClick={() => setMenuOpen(false)}
+        >
+          <Image
+            src="/anc-logo.jpeg"
+            alt="HVAC"
+            width={40}
+            height={40}
+            className="h-10 w-10 rounded-full object-cover"
+          />
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-zinc-100">HVAC</span>
+            <span className="text-xs text-zinc-400">Dashboard</span>
+          </div>
         </Link>
 
         <button
@@ -162,10 +167,19 @@ export default function Header({ user, loading = false }: HeaderProps) {
         >
           {loading ? null : user ? (
             <div className="nav-shell-mobile sm:nav-shell flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-1 w-full sm:w-auto">
-              <div className="rounded-xl border border-amber-500/30 bg-zinc-900/80 px-3 py-2 text-xs">
-                <div className="text-zinc-200 font-semibold">{user.name || user.email}</div>
-                <div className="text-amber-300 uppercase tracking-wide">{user.role}</div>
-              </div>
+              {!loading && user && (
+                <div className="mb-2 rounded-xl border border-amber-500/20 bg-zinc-900/80 px-3 py-2 sm:mb-0">
+                  <div className="text-sm font-semibold text-zinc-100">
+                    {user.name || user.email}
+                  </div>
+                  <div className="text-xs uppercase tracking-wide text-amber-300">
+                    {user.role}
+                  </div>
+                  <div className="text-[11px] text-zinc-400">
+                    {user.email}
+                  </div>
+                </div>
+              )}
 
               {commonLinks.map((link) => (
                 <Link

@@ -16,6 +16,12 @@ export interface GoogleFormInternal {
   jobPrice: number;
   depositTaken: boolean;
   depositAmount?: number;
+  phone: string;
+  street: string;
+  city: string;
+  zipCode: string;
+  taxes: number;
+  total: number;
 }
 
 export type GoogleFormFieldName =

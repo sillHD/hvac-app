@@ -24,13 +24,60 @@ import { mockCustomers } from '../lib/mocks';
 import { useAuth } from '../client/hooks/useAuth';
 import { getAuthHeaders } from '../client/lib/authHeaders';
 import { useI18n } from '../i18n/I18nProvider';
+import { formatUsPhoneWithCountry, isValidUsPhone } from '../lib/utils/phone';
 
 interface JobFormProps {
   onSuccess?: () => void;
   mode?: 'invoice' | 'quote';
 }
 
-const emptyJob: Omit<Job, 'id'> = {
+type JobFormState = Omit<Job, 'id'> & {
+  phone: string;
+  street: string;
+  city: string;
+  zipCode: string;
+  taxes: string;
+};
+
+const jobSchema = z.object({
+  reportType: z.enum(['invoice', 'quote']).optional(),
+  quoteStatus: z.enum(['approved', 'pending']).optional(),
+  customer: z.object({
+    name: z.string().min(1, 'Required'),
+    phone: z.string().min(1, 'Required'),
+    email: z.string().email('Invalid email'),
+  }),
+  serviceAddress: z.string().min(1, 'Required'),
+  serviceType: z.string().min(1, 'Required'),
+  title: z.string().optional(),
+  invoiceDescription: z.string().min(1, 'Required'),
+  price: z.number().nullable(),
+  paymentTerms: z.string().optional(),
+  depositTaken: z.boolean(),
+  depositAmount: z.number().optional(),
+  materialsUsed: z.array(z.string()).optional(),
+  technicianName: z.string().min(1, 'Required'),
+  completedAt: z.string().optional(),
+  photos: z.array(z.string()).optional(),
+  status: z.enum([
+    'draft',
+    'submitted',
+    'processing',
+    'invoice_created',
+    'completed',
+    'partial_paid',
+    'paid',
+    'cancelled',
+    'error',
+  ]),
+  phone: z.string().optional(),
+  street: z.string().optional(),
+  city: z.string().optional(),
+  zipCode: z.string().optional(),
+  taxes: z.string().optional(),
+});
+
+const initialForm: JobFormState = {
   reportType: 'invoice',
   quoteStatus: 'pending',
   customer: { name: '', phone: '', email: '' },
@@ -47,21 +94,58 @@ const emptyJob: Omit<Job, 'id'> = {
   completedAt: '',
   photos: [],
   status: 'draft',
+  phone: '+1 ',
+  street: '',
+  city: '',
+  zipCode: '',
+  taxes: '6',
 };
+
+function composeServiceAddress(street: string, city: string, zipCode: string): string {
+  return [street.trim(), city.trim(), zipCode.trim()].filter(Boolean).join(', ');
+}
+
+function splitServiceAddress(address: string): { street: string; city: string; zipCode: string } {
+  const parts = address.split(',').map((p) => p.trim()).filter(Boolean);
+  return {
+    street: parts[0] || '',
+    city: parts[1] || '',
+    zipCode: parts[2] || '',
+  };
+}
 
 export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
   const isQuoteMode = mode === 'quote';
   const { t } = useI18n();
   const formatMoney = (value: number | null | undefined) => {
     const amount = typeof value === 'number' && !isNaN(value) ? value : 0;
-    return `${amount.toFixed(2)}$`;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+  const formatCurrencyInput = (value: number | null | undefined) => {
+    const amount = typeof value === 'number' && Number.isFinite(value) ? value : 0;
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+  const parseCurrencyInput = (raw: string): number | null => {
+    const normalized = raw.replace(/[^\d.]/g, '');
+    if (!normalized) return null;
+    const parsed = Number.parseFloat(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
   };
   const { user } = useAuth();
-  const [job, setJob] = useState<Omit<Job, 'id'>>({
-    ...emptyJob,
+  const [job, setJob] = useState<JobFormState>({
+    ...initialForm,
     // default to logged in technician or empty
     technicianName: user?.name || user?.email || '',
   });
+  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // customers + selection state
@@ -69,6 +153,14 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(''); // '' means new customer
   const [addressOptions, setAddressOptions] = useState<string[]>([]);
   const [addingAddress, setAddingAddress] = useState(false);
+
+  const basePrice = typeof job.price === 'number' && Number.isFinite(job.price) ? job.price : 0;
+  const taxesPercent = (() => {
+    const parsed = Number.parseFloat(job.taxes || '0');
+    return Number.isFinite(parsed) ? parsed : 0;
+  })();
+  const taxesAmount = basePrice * (taxesPercent / 100);
+  const finalPrice = basePrice + taxesAmount;
 
   const handleSelectCustomer = (id: string) => {
     setSelectedCustomerId(id);
@@ -106,30 +198,18 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
     return value;
   };
 
-
-
-
-  // validation including email and service address logic
-  const jobSchema = z.object({
-    customer: z.object({
-      name: z.string().nonempty(t('form.required')),
-      phone: z.string().nonempty(t('form.required')),
-      email: z.string().nonempty(t('form.required')).email(t('form.invalidEmail')),
-    }),
-    serviceAddress: z.string().nonempty(t('form.required')),
-    serviceType: z.enum(['Install','Repair','Maintenance','Diagnóstico'] as const),
-    invoiceDescription: z.string()
-      .min(1, t('form.required'))
-      .nonempty(t('form.required')),
-    price: z.number().gt(0, t('form.invalidAmount')),
-    depositTaken: z.boolean(),
-    depositAmount: z.number().nonnegative(t('form.invalidDeposit')),
-    technicianName: z.string().nonempty(t('form.required')),
-  });
-  const [submitting, setSubmitting] = useState(false);
-
   const validate = () => {
     try {
+      const combinedAddress = composeServiceAddress(job.street, job.city, job.zipCode);
+      if (!combinedAddress) {
+        throw new Error('serviceAddress');
+      }
+      if (job.customer.phone && !isValidUsPhone(formatUsPhoneWithCountry(job.customer.phone))) {
+        throw new Error('customer.phone');
+      }
+      if (!Number.isFinite(taxesPercent) || taxesPercent < 0 || taxesPercent > 100) {
+        throw new Error('taxes');
+      }
       jobSchema.parse(job);
       // additional conditional rule
       if (job.depositTaken && (!job.depositAmount || job.depositAmount <= 0)) {
@@ -152,6 +232,27 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
         (e as { message?: unknown }).message === 'depositAmount'
       ) {
         formatted.depositAmount = t('form.depositRule');
+      } else if (
+        typeof e === 'object' &&
+        e !== null &&
+        'message' in e &&
+        (e as { message?: unknown }).message === 'taxes'
+      ) {
+        formatted.taxes = 'Taxes % debe estar entre 0 y 100';
+      } else if (
+        typeof e === 'object' &&
+        e !== null &&
+        'message' in e &&
+        (e as { message?: unknown }).message === 'serviceAddress'
+      ) {
+        formatted.serviceAddress = t('form.address');
+      } else if (
+        typeof e === 'object' &&
+        e !== null &&
+        'message' in e &&
+        (e as { message?: unknown }).message === 'customer.phone'
+      ) {
+        formatted['customer.phone'] = t('form.phone');
       }
       return formatted;
     }
@@ -178,15 +279,43 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
     if (Object.keys(err).length > 0) return;
     setSubmitting(true);
     try {
+      const combinedServiceAddress = composeServiceAddress(job.street, job.city, job.zipCode);
+      const jobCore: Omit<Job, 'id'> = {
+        reportType: job.reportType,
+        quoteStatus: job.quoteStatus,
+        createdByEmail: job.createdByEmail,
+        qbInvoiceId: job.qbInvoiceId,
+        qbInvoiceNumber: job.qbInvoiceNumber,
+        paymentStatus: job.paymentStatus,
+        paymentAmount: job.paymentAmount,
+        paymentDate: job.paymentDate,
+        lastSynced: job.lastSynced,
+        customer: job.customer,
+        serviceAddress: combinedServiceAddress,
+        serviceType: job.serviceType,
+        title: job.title,
+        invoiceDescription: job.invoiceDescription,
+        price: job.price,
+        paymentTerms: job.paymentTerms,
+        depositTaken: job.depositTaken,
+        depositAmount: job.depositAmount,
+        materialsUsed: job.materialsUsed,
+        technicianName: job.technicianName,
+        completedAt: job.completedAt,
+        photos: job.photos,
+        status: job.status,
+      };
+
       const payload: Omit<Job, 'id'> = isQuoteMode
         ? {
-            ...job,
+            ...jobCore,
             reportType: 'quote',
             quoteStatus: job.quoteStatus || 'pending',
+            serviceAddress: combinedServiceAddress,
             depositTaken: false,
             depositAmount: 0,
           }
-        : { ...job, reportType: 'invoice' };
+        : { ...jobCore, reportType: 'invoice', serviceAddress: combinedServiceAddress };
 
       // if new customer, add to options
       if (!selectedCustomerId) {
@@ -195,7 +324,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
           name: job.customer.name,
           phone: job.customer.phone,
           email: job.customer.email,
-          addresses: job.serviceAddress ? [job.serviceAddress] : [],
+          addresses: combinedServiceAddress ? [combinedServiceAddress] : [],
         };
         setCustomers((c) => [...c, newCust]);
         // also mutate global mock so other components see it
@@ -203,8 +332,8 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
       } else {
         // if existing but new address provided, push to that customer
         const cust = customers.find((c) => c.id === selectedCustomerId);
-        if (cust && job.serviceAddress && !cust.addresses?.includes(job.serviceAddress)) {
-          cust.addresses = [...(cust.addresses || []), job.serviceAddress];
+        if (cust && combinedServiceAddress && !cust.addresses?.includes(combinedServiceAddress)) {
+          cust.addresses = [...(cust.addresses || []), combinedServiceAddress];
         }
       }
 
@@ -250,7 +379,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
             <p className="field-note mt-1">{t('form.customerHelp')}</p>
             <select
               value={selectedCustomerId}
-              onChange={(e) => setSelectedCustomerId(e.target.value)}
+              onChange={(e) => handleSelectCustomer(e.target.value)}
               className="mt-1 block w-full border rounded p-2"
             >
               <option value="">{t('form.newCustomerOption')}</option>
@@ -316,7 +445,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
             <input
               type="tel"
               value={job.customer.phone}
-              onChange={(e) => handleCustomerChange('phone', e.target.value)}
+              onChange={(e) => handleCustomerChange('phone', formatUsPhoneWithCountry(e.target.value))}
               readOnly={!!selectedCustomerId}
               className="mt-1 block w-full border rounded p-2"
             />
@@ -340,10 +469,17 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
                     const val = e.target.value;
                     if (val === '__other__') {
                       setAddingAddress(true);
-                      setJob((j) => ({ ...j, serviceAddress: '' }));
+                      setJob((j) => ({ ...j, serviceAddress: '', street: '', city: '', zipCode: '' }));
                     } else {
+                      const parsed = splitServiceAddress(val);
                       setAddingAddress(false);
-                      setJob((j) => ({ ...j, serviceAddress: val }));
+                      setJob((j) => ({
+                        ...j,
+                        serviceAddress: val,
+                        street: parsed.street,
+                        city: parsed.city,
+                        zipCode: parsed.zipCode,
+                      }));
                     }
                   }}
                   className="mt-1 block w-full border rounded p-2"
@@ -355,22 +491,97 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
                   <option value="__other__">{t('form.other')}</option>
                 </select>
                 {addingAddress && (
-                  <input
-                    type="text"
-                    value={job.serviceAddress}
-                    onChange={(e) => handleChange('serviceAddress', e.target.value)}
-                    placeholder={t('form.newAddressPlaceholder')}
-                    className="mt-1 block w-full border rounded p-2"
-                  />
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <input
+                      type="text"
+                      value={job.street}
+                      onChange={(e) => {
+                        const nextStreet = e.target.value;
+                        setJob((j) => ({
+                          ...j,
+                          street: nextStreet,
+                          serviceAddress: composeServiceAddress(nextStreet, j.city, j.zipCode),
+                        }));
+                      }}
+                      placeholder="Street"
+                      className="mt-1 block w-full border rounded p-2"
+                    />
+                    <input
+                      type="text"
+                      value={job.city}
+                      onChange={(e) => {
+                        const nextCity = e.target.value;
+                        setJob((j) => ({
+                          ...j,
+                          city: nextCity,
+                          serviceAddress: composeServiceAddress(j.street, nextCity, j.zipCode),
+                        }));
+                      }}
+                      placeholder="City"
+                      className="mt-1 block w-full border rounded p-2"
+                    />
+                    <input
+                      type="text"
+                      value={job.zipCode}
+                      onChange={(e) => {
+                        const nextZip = e.target.value;
+                        setJob((j) => ({
+                          ...j,
+                          zipCode: nextZip,
+                          serviceAddress: composeServiceAddress(j.street, j.city, nextZip),
+                        }));
+                      }}
+                      placeholder="Zip code"
+                      className="mt-1 block w-full border rounded p-2"
+                    />
+                  </div>
                 )}
               </>
             ) : (
-              <input
-                type="text"
-                value={job.serviceAddress}
-                onChange={(e) => handleChange('serviceAddress', e.target.value)}
-                className="mt-1 block w-full border rounded p-2"
-              />
+              <div className="grid gap-2 sm:grid-cols-3">
+                <input
+                  type="text"
+                  value={job.street}
+                  onChange={(e) => {
+                    const nextStreet = e.target.value;
+                    setJob((j) => ({
+                      ...j,
+                      street: nextStreet,
+                      serviceAddress: composeServiceAddress(nextStreet, j.city, j.zipCode),
+                    }));
+                  }}
+                  placeholder="Street"
+                  className="mt-1 block w-full border rounded p-2"
+                />
+                <input
+                  type="text"
+                  value={job.city}
+                  onChange={(e) => {
+                    const nextCity = e.target.value;
+                    setJob((j) => ({
+                      ...j,
+                      city: nextCity,
+                      serviceAddress: composeServiceAddress(j.street, nextCity, j.zipCode),
+                    }));
+                  }}
+                  placeholder="City"
+                  className="mt-1 block w-full border rounded p-2"
+                />
+                <input
+                  type="text"
+                  value={job.zipCode}
+                  onChange={(e) => {
+                    const nextZip = e.target.value;
+                    setJob((j) => ({
+                      ...j,
+                      zipCode: nextZip,
+                      serviceAddress: composeServiceAddress(j.street, j.city, nextZip),
+                    }));
+                  }}
+                  placeholder="Zip code"
+                  className="mt-1 block w-full border rounded p-2"
+                />
+              </div>
             )}
             {errors.serviceAddress && <p className="text-red-600 text-sm">{errors.serviceAddress}</p>}
           </div>
@@ -409,20 +620,36 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
           <div>
             <label className="block text-sm font-medium text-zinc-100">{t('form.price')}</label>
             <p className="field-note mt-1">{t('form.priceHelp')}</p>
+            <div className="relative mt-1">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">$</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={formatCurrencyInput(job.price)}
+                onChange={(e) => {
+                  handleChange('price', parseCurrencyInput(e.target.value));
+                }}
+                className="block w-full border rounded p-3 pl-7 text-base"
+              />
+            </div>
+            <p className="field-note mt-1">{t('form.currentAmount')}: {formatMoney(job.price)}</p>
+            {errors.price && <p className="text-red-600 text-sm">{errors.price}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-zinc-100">Taxes %</label>
             <input
               type="number"
               min="0"
+              max="100"
               step="0.01"
               inputMode="decimal"
-              value={job.price ?? ''}
-              onChange={(e) => {
-                const value = e.target.value;
-                handleChange('price', value === '' ? null : parseFloat(value));
-              }}
+              value={job.taxes}
+              onChange={(e) => handleChange('taxes', e.target.value)}
               className="mt-1 block w-full border rounded p-3 text-base"
             />
-            <p className="field-note mt-1">{t('form.currentAmount')}: {formatMoney(job.price)}</p>
-            {errors.price && <p className="text-red-600 text-sm">{errors.price}</p>}
+            <p className="field-note mt-1">Monto de taxes: {formatMoney(taxesAmount)}</p>
+            <p className="field-note">Precio final: {formatMoney(finalPrice)}</p>
+            {errors.taxes && <p className="text-red-600 text-sm">{errors.taxes}</p>}
           </div>
           {!isQuoteMode && (
             <>
@@ -441,15 +668,16 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
               {job.depositTaken && (
                 <div>
                   <label className="block text-sm font-medium text-zinc-100">{t('form.depositAmount')}</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    inputMode="decimal"
-                    value={job.depositAmount}
-                    onChange={(e) => handleChange('depositAmount', parseFloat(e.target.value))}
-                    className="mt-1 block w-full border rounded p-3 text-base"
-                  />
+                  <div className="relative mt-1">
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">$</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={formatCurrencyInput(job.depositAmount)}
+                      onChange={(e) => handleChange('depositAmount', parseCurrencyInput(e.target.value) ?? 0)}
+                      className="block w-full border rounded p-3 pl-7 text-base"
+                    />
+                  </div>
                   <p className="field-note mt-1">{t('form.currentAmount')}: {formatMoney(job.depositAmount)}</p>
                   {errors.depositAmount && <p className="text-red-600 text-sm">{errors.depositAmount}</p>}
                 </div>

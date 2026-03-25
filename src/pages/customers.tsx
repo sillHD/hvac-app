@@ -15,8 +15,10 @@
  */
 import React, { FormEvent, useEffect, useState } from 'react';
 import Protected from '../components/Protected';
+import { useAuth } from '../client/hooks/useAuth';
 import { getAuthHeaders } from '../client/lib/authHeaders';
 import { useI18n } from '../i18n/I18nProvider';
+import { canDeleteCustomers, canEditCustomers } from '../lib/utils/permissions';
 
 type Customer = {
   id?: string;
@@ -35,6 +37,7 @@ const emptyForm: Customer = {
 
 export default function CustomersPage() {
   const { t } = useI18n();
+  const { user, loading: authLoading } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,6 +45,9 @@ export default function CustomersPage() {
   const [form, setForm] = useState<Customer>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const userRole = user?.role ?? null;
+  const allowEdit = canEditCustomers(userRole);
+  const allowDelete = canDeleteCustomers(userRole);
 
   const loadCustomers = async (search = '') => {
     setLoading(true);
@@ -100,9 +106,9 @@ export default function CustomersPage() {
     });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t('customers.deleteConfirm'))) return;
-    const res = await fetch(`/api/customers?id=${encodeURIComponent(id)}`, {
+  const handleDeleteCustomer = async (customerId: string) => {
+    if (!allowDelete) return;
+    const res = await fetch(`/api/customers?id=${encodeURIComponent(customerId)}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
@@ -208,6 +214,8 @@ export default function CustomersPage() {
 
         {loading ? (
           <p className="text-zinc-300">{t('ui.loading')}</p>
+        ) : authLoading ? (
+          <p className="text-zinc-300">{t('ui.loading')}</p>
         ) : customers.length === 0 ? (
           <p className="text-zinc-300">{t('customers.empty')}</p>
         ) : (
@@ -223,14 +231,15 @@ export default function CustomersPage() {
                   <button
                     type="button"
                     onClick={() => startEdit(c)}
+                    disabled={!allowEdit}
                     className="px-3 py-1 text-xs rounded-full bg-blue-500/20 text-blue-300 hover:bg-blue-500/35"
                   >
                     {t('ui.edit')}
                   </button>
-                  {c.id && (
+                  {c.id && allowDelete && (
                     <button
                       type="button"
-                      onClick={() => handleDelete(c.id as string)}
+                      onClick={() => handleDeleteCustomer(c.id as string)}
                       className="px-3 py-1 text-xs rounded-full bg-red-500/20 text-red-300 hover:bg-red-500/35"
                     >
                       {t('ui.delete')}

@@ -180,8 +180,9 @@ function getQuoteReadRangeCandidates() {
 }
 
 function getLegacyAppendRow(data: GoogleFormInternal): string[] {
+  const nowIso = new Date().toISOString();
   return [
-    new Date().toISOString(),
+    nowIso,
     data.reportType || 'invoice',
     data.quoteStatus || '',
     data.createdByEmail || '',
@@ -192,7 +193,7 @@ function getLegacyAppendRow(data: GoogleFormInternal): string[] {
     data.serviceAddress,
     data.workType,
     data.workDescription,
-    String(data.jobPrice),
+    String(data.jobPrice ?? 0),
     data.depositTaken ? 'Yes' : 'No',
     data.depositAmount != null ? String(data.depositAmount) : '',
     '',
@@ -200,7 +201,7 @@ function getLegacyAppendRow(data: GoogleFormInternal): string[] {
     data.reportType === 'quote' ? '' : 'PENDING',
     data.reportType === 'quote' ? '' : '0',
     '',
-    new Date().toISOString(),
+    nowIso,
   ];
 }
 
