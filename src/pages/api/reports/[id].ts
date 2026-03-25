@@ -28,9 +28,13 @@ import { withAuth } from '../../../server/middleware/auth';
 import { logAuditEvent } from '../../../server/services/audit';
 
 /** Determina si el usuario es el creador/técnico del reporte */
-function isOwnerReport(report: { createdByEmail?: string; technicianName?: string }, userEmail: string): boolean {
-  if (report.createdByEmail) return report.createdByEmail === userEmail;
-  return report.technicianName === userEmail;
+function isOwnerReport(
+  report: { createdByEmail?: string; technicianId?: string; technicianName?: string },
+  user: { id: string; email: string; name?: string }
+): boolean {
+  if (report.technicianId) return report.technicianId === user.id;
+  if (report.createdByEmail) return report.createdByEmail === user.email;
+  return report.technicianName === user.email || report.technicianName === user.name;
 }
 
 /** Los técnicos solo pueden mutar reportes en estados editables */
@@ -49,7 +53,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(404).json({ error: 'Not found' });
     }
 
-    const isOwner = isOwnerReport(report, user.email);
+    const isOwner = isOwnerReport(report, user);
     if (user.role === 'technician' && !isOwner) {
       return res.status(403).json({ error: 'Forbidden' });
     }
@@ -66,7 +70,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(404).json({ error: 'Not found' });
     }
 
-    const isOwner = isOwnerReport(current, user.email);
+    const isOwner = isOwnerReport(current, user);
     const canMutateAsTechnician =
       canTechnicianEditOwnReports(user.role) &&
       isOwner &&
@@ -98,7 +102,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(404).json({ error: 'Not found' });
     }
 
-    const isOwner = isOwnerReport(current, user.email);
+    const isOwner = isOwnerReport(current, user);
     const canMutateAsTechnician =
       canTechnicianEditOwnReports(user.role) &&
       isOwner &&

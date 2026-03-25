@@ -29,6 +29,7 @@ export default function AdminUsersPage() {
     role: 'technician' as AssignableRole,
   });
   const [roleDrafts, setRoleDrafts] = useState<Record<string, AssignableRole>>({});
+  const [nameDrafts, setNameDrafts] = useState<Record<string, string>>({});
 
   function toAssignableRole(role: Role): AssignableRole {
     return role === 'admin' ? 'admin' : 'technician';
@@ -49,12 +50,15 @@ export default function AdminUsersPage() {
       const fetchedUsers = (data.users || []) as ManagedUser[];
       setUsers(fetchedUsers);
       const nextDrafts: Record<string, AssignableRole> = {};
+      const nextNameDrafts: Record<string, string> = {};
       fetchedUsers.forEach((u) => {
         if (u.role !== 'root') {
           nextDrafts[u.id] = toAssignableRole(u.role);
         }
+        nextNameDrafts[u.id] = u.name || '';
       });
       setRoleDrafts(nextDrafts);
+      setNameDrafts(nextNameDrafts);
     } catch (err) {
       console.error(err);
       setError(t('admin.loadNetworkError'));
@@ -71,6 +75,10 @@ export default function AdminUsersPage() {
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
+    if (createForm.role === 'technician' && !createForm.name.trim()) {
+      setError('Technician name is required');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -94,7 +102,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  const patchUser = async (id: string, patch: Partial<{ role: AssignableRole; disabled: boolean; password: string }>) => {
+  const patchUser = async (id: string, patch: Partial<{ role: AssignableRole; disabled: boolean; password: string; name: string }>) => {
     setSaving(true);
     setError(null);
     try {
@@ -110,6 +118,7 @@ export default function AdminUsersPage() {
       }
       const updated = data.user as ManagedUser;
       setUsers((prev) => prev.map((u) => (u.id === id ? updated : u)));
+      setNameDrafts((prev) => ({ ...prev, [id]: updated.name || '' }));
       if (updated.role !== 'root') {
         setRoleDrafts((prev) => ({
           ...prev,
@@ -151,6 +160,15 @@ export default function AdminUsersPage() {
     const newPassword = prompt(t('admin.newPasswordPrompt'));
     if (!newPassword) return;
     await patchUser(id, { password: newPassword });
+  };
+
+  const handleSaveName = async (id: string) => {
+    const name = (nameDrafts[id] || '').trim();
+    if (!name) {
+      setError('Name is required');
+      return;
+    }
+    await patchUser(id, { name });
   };
 
   if (loading) {
@@ -237,6 +255,27 @@ export default function AdminUsersPage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <input
+                    type="text"
+                    value={nameDrafts[managedUser.id] || ''}
+                    onChange={(e) =>
+                      setNameDrafts((prev) => ({
+                        ...prev,
+                        [managedUser.id]: e.target.value,
+                      }))
+                    }
+                    disabled={saving || managedUser.role === 'root' || (isAdmin && managedUser.role !== 'technician')}
+                    className="px-3 py-1 text-xs rounded-full bg-black/20 border border-white/10 text-zinc-100"
+                    placeholder="Name"
+                  />
+                  <button
+                    type="button"
+                    disabled={saving || managedUser.role === 'root' || (isAdmin && managedUser.role !== 'technician')}
+                    onClick={() => handleSaveName(managedUser.id)}
+                    className="px-3 py-1 text-xs rounded-full bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/35 disabled:opacity-40"
+                  >
+                    Save name
+                  </button>
                   <button
                     type="button"
                     disabled={saving || managedUser.role === 'root' || (isAdmin && managedUser.role !== 'technician')}

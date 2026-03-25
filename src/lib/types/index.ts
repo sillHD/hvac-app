@@ -109,6 +109,7 @@ export interface Job {
   depositTaken: boolean;
   depositAmount?: number;
   materialsUsed?: string[];
+  technicianId?: string;
   technicianName: string;
   completedAt: string; // ISO date/time
   photos?: string[]; // urls or base64

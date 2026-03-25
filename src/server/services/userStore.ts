@@ -10,6 +10,7 @@ export interface StoredUser {
   email: string;
   role: Role;
   passwordHash: string;
+  sessionVersion?: number;
   active: boolean;
   createdAt: string;
   updatedAt: string;

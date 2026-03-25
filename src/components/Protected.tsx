@@ -17,7 +17,7 @@
  *     <MiContenidoProtegido />
  *   </Protected>
  */
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/router';
 
 interface ProtectedProps {
@@ -26,20 +26,15 @@ interface ProtectedProps {
 
 export default function Protected({ children }: ProtectedProps) {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
+  const hasToken = typeof window !== 'undefined' ? !!localStorage.getItem('token') : false;
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-    if (!token) {
+    if (!hasToken) {
       void router.replace('/login');
-      return;
     }
+  }, [hasToken, router]);
 
-    setReady(true);
-  }, [router]);
-
-  if (!ready) return <div className="p-4 text-sm text-zinc-400">Cargando...</div>;
+  if (!hasToken) return <div className="p-4 text-sm text-zinc-400">Cargando...</div>;
 
   return <>{children}</>;
 }

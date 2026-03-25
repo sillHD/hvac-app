@@ -6,6 +6,7 @@ export interface GoogleFormInternal {
   reportType?: 'invoice' | 'quote';
   quoteStatus?: 'approved' | 'pending';
   createdByEmail?: string;
+  technicianId?: string;
   technician: string;
   customerName: string;
   customerEmail?: string; // optional for legacy form

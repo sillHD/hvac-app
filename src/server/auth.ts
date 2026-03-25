@@ -1,4 +1,5 @@
 import type { NextApiRequest } from 'next';
+import { compare as bcryptCompare, hash as bcryptHash } from 'bcryptjs';
 import {
   deleteUserStore,
   getUserByEmailStore,
@@ -21,6 +22,7 @@ export interface ManagedUser extends User {
 }
 
 const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
+const PASSWORD_HASH_ROUNDS = Number.parseInt(process.env.PASSWORD_HASH_ROUNDS || '12', 10);
 
 let seedPromise: Promise<void> | null = null;
 
@@ -34,6 +36,34 @@ function mapStoreRoleToUserRole(role: StoreRole): User['role'] {
 
 function mapUserRoleToStoreRole(role: User['role']): StoreRole {
   return role === 'technician' ? 'tech' : role;
+}
+
+function normalizePasswordRounds(): number {
+  if (Number.isFinite(PASSWORD_HASH_ROUNDS) && PASSWORD_HASH_ROUNDS >= 8 && PASSWORD_HASH_ROUNDS <= 14) {
+    return PASSWORD_HASH_ROUNDS;
+  }
+  return 12;
+}
+
+function isBcryptHash(passwordHash: string): boolean {
+  return /^\$2[aby]\$\d{2}\$/.test(passwordHash);
+}
+
+async function hashPassword(plainPassword: string): Promise<string> {
+  return bcryptHash(plainPassword, normalizePasswordRounds());
+}
+
+async function verifyPassword(storedPasswordHash: string, plainPassword: string): Promise<boolean> {
+  if (isBcryptHash(storedPasswordHash)) {
+    return bcryptCompare(plainPassword, storedPasswordHash);
+  }
+
+  // Legacy fallback for users created before password hashing was introduced.
+  return storedPasswordHash === plainPassword;
+}
+
+function getSessionVersion(user: PersistedUser): number {
+  return user.sessionVersion && user.sessionVersion > 0 ? user.sessionVersion : 1;
 }
 
 function toPublicUser(user: PersistedUser): User {
@@ -105,12 +135,14 @@ async function ensureSeedUsers(): Promise<void> {
     if (existing) continue;
 
     const timestamp = new Date().toISOString();
+    const passwordHash = await hashPassword(seed.password);
     await upsertUserStore({
       id: seed.id,
       email: normalizeEmail(seed.email),
       name: seed.name,
       role: seed.role,
-      passwordHash: seed.password,
+      passwordHash,
+      sessionVersion: 1,
       active: true,
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -141,6 +173,7 @@ export async function verifyToken(token: string): Promise<User | null> {
   const parts = token.split(':');
   const userId = parts[1];
   const issuedAtMs = Number(parts[2] || '0');
+  const sessionVersion = Number(parts[3] || '1');
 
   if (issuedAtMs > 0 && Date.now() - issuedAtMs > TOKEN_TTL_MS) {
     return null;
@@ -149,6 +182,7 @@ export async function verifyToken(token: string): Promise<User | null> {
   await ensureUsersReady();
   const storedUser = await getUserByIdStore(userId);
   if (!storedUser || !storedUser.active) return null;
+  if (getSessionVersion(storedUser) !== sessionVersion) return null;
 
   return toPublicUser(storedUser);
 }
@@ -156,9 +190,16 @@ export async function verifyToken(token: string): Promise<User | null> {
 export async function signIn(email: string, password: string): Promise<{ token: string; user: User } | null> {
   const storedUser = await getActiveUserByEmail(email);
   if (!storedUser) return null;
-  if (storedUser.passwordHash !== password) return null;
+  const validPassword = await verifyPassword(storedUser.passwordHash, password);
+  if (!validPassword) return null;
 
-  const token = `user:${storedUser.id}:${Date.now()}`;
+  // Upgrade legacy plaintext password to bcrypt on successful login.
+  if (!isBcryptHash(storedUser.passwordHash)) {
+    storedUser.passwordHash = await hashPassword(password);
+    await upsertUserStore(storedUser);
+  }
+
+  const token = `user:${storedUser.id}:${Date.now()}:${getSessionVersion(storedUser)}`;
   return {
     token,
     user: toPublicUser(storedUser),
@@ -190,6 +231,9 @@ export async function createUser(input: {
   if (!email || !input.password) {
     throw new Error('Email and password are required');
   }
+  if (input.role === 'technician' && !input.name?.trim()) {
+    throw new Error('Technician name is required');
+  }
   if (input.role === 'root') {
     throw new Error('No se permite crear otro usuario root');
   }
@@ -200,12 +244,14 @@ export async function createUser(input: {
   }
 
   const timestamp = new Date().toISOString();
+  const passwordHash = await hashPassword(input.password);
   const createdUser: PersistedUser = {
     id: await nextUserId(),
     email,
-    name: input.name || email,
+    name: input.name?.trim() || email,
     role: mapUserRoleToStoreRole(input.role),
-    passwordHash: input.password,
+    passwordHash,
+    sessionVersion: 1,
     active: !input.disabled,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -238,12 +284,22 @@ export async function updateUser(
     throw new Error('No se permite asignar el rol root');
   }
 
+  const nextRole = patch.role ? mapUserRoleToStoreRole(patch.role) : current.role;
+  const nextName = patch.name !== undefined ? patch.name.trim() : current.name;
+  if (nextRole === 'tech' && !nextName) {
+    throw new Error('Technician name is required');
+  }
+
+  const hasPasswordChange = typeof patch.password === 'string' && patch.password.length > 0;
+  const nextPasswordHash = hasPasswordChange ? await hashPassword(patch.password!) : current.passwordHash;
+
   const updated: PersistedUser = {
     ...current,
     email: nextEmail,
-    name: patch.name ?? current.name,
-    role: patch.role ? mapUserRoleToStoreRole(patch.role) : current.role,
-    passwordHash: patch.password ?? current.passwordHash,
+    name: nextName,
+    role: nextRole,
+    passwordHash: nextPasswordHash,
+    sessionVersion: hasPasswordChange ? getSessionVersion(current) + 1 : getSessionVersion(current),
     active: patch.disabled !== undefined ? !patch.disabled : current.active,
     updatedAt: new Date().toISOString(),
   };
@@ -264,6 +320,18 @@ export async function deleteUser(id: string): Promise<boolean> {
   }
 
   await deleteUserStore(current.email);
+  return true;
+}
+
+export async function invalidateUserSessions(userId: string): Promise<boolean> {
+  await ensureUsersReady();
+  const current = await getUserByIdStore(userId);
+  if (!current) return false;
+
+  await upsertUserStore({
+    ...current,
+    sessionVersion: getSessionVersion(current) + 1,
+  });
   return true;
 }
 

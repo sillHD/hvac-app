@@ -29,10 +29,6 @@ import { useI18n } from '../i18n/I18nProvider';
 export default function DashboardPage() {
   const { user } = useAuth();
   const { t } = useI18n();
-  const formatMoney = (value: number | null | undefined) => {
-    const amount = typeof value === 'number' && !isNaN(value) ? value : 0;
-    return `${amount.toFixed(2)}$`;
-  };
   const formatMoneyNoCents = (value: number | null | undefined) => {
     const amount = typeof value === 'number' && !isNaN(value) ? value : 0;
     return `${amount.toFixed(0)}$`;

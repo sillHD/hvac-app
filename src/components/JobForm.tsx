@@ -62,6 +62,7 @@ const jobSchema = z.object({
   depositTaken: z.boolean(),
   depositAmount: z.number().optional(),
   materialsUsed: z.array(z.string()).optional(),
+  technicianId: z.string().optional(),
   technicianName: z.string().min(1, 'Required'),
   completedAt: z.string().optional(),
   photos: z.array(z.string()).optional(),
@@ -149,6 +150,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
   const [job, setJob] = useState<JobFormState>({
     ...initialForm,
     // default to logged in technician or empty
+    technicianId: user?.id,
     technicianName: user?.name || user?.email || '',
   });
   const [submitting, setSubmitting] = useState(false);
@@ -233,7 +235,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
       return [
         ...current,
         {
-          id: `self-${user?.email || 'unknown'}`,
+          id: user?.id || `self-${user?.email || 'unknown'}`,
           name: defaultTechnicianName,
           email: user?.email || '',
         },
@@ -245,10 +247,24 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
         ? current
         : {
             ...current,
+            technicianId: user?.id,
             technicianName: defaultTechnicianName,
           }
     );
-  }, [user?.name, user?.email]);
+  }, [user?.id, user?.name, user?.email]);
+
+  useEffect(() => {
+    if (job.technicianId || !job.technicianName || technicians.length === 0) return;
+
+    const match = technicians.find((tech) => tech.name === job.technicianName);
+    if (!match) return;
+
+    setJob((current) => ({
+      ...current,
+      technicianId: match.id,
+      technicianName: match.name,
+    }));
+  }, [job.technicianId, job.technicianName, technicians]);
 
   const serviceTypes = ['Install', 'Repair', 'Maintenance', 'Diagnóstico'];
   const serviceTypeLabel = (value: string) => {
@@ -361,6 +377,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
         depositTaken: job.depositTaken,
         depositAmount: job.depositAmount,
         materialsUsed: job.materialsUsed,
+        technicianId: job.technicianId,
         technicianName: job.technicianName,
         completedAt: job.completedAt,
         photos: job.photos,
@@ -460,13 +477,24 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
         <div>
           <p className="field-note mb-2">{t('form.technicianHelp')}</p>
           <select
-            value={job.technicianName}
-            onChange={(e) => handleChange('technicianName', e.target.value)}
+            value={job.technicianId || ''}
+            onChange={(e) => {
+              const selected = technicians.find((tech) => tech.id === e.target.value);
+              if (!selected) {
+                setJob((current) => ({ ...current, technicianId: undefined, technicianName: '' }));
+                return;
+              }
+              setJob((current) => ({
+                ...current,
+                technicianId: selected.id,
+                technicianName: selected.name,
+              }));
+            }}
             className="mt-1 block w-full border rounded p-2"
           >
             <option value="">{t('form.selectOption')}</option>
             {technicians.map((tech) => (
-              <option key={tech.id} value={tech.name}>
+              <option key={tech.id} value={tech.id}>
                 {tech.name}
               </option>
             ))}

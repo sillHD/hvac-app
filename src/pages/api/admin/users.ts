@@ -6,7 +6,7 @@
  *
  * GET              — Lista todos los usuarios gestionados
  * POST             — Crea usuario (body: { email, name?, role, password, disabled? })
- * PATCH            — Actualiza usuario (body: { id, email?, role?, password?, disabled? })
+ * PATCH            — Actualiza usuario (body: { id, email?, name?, role?, password?, disabled? })
  * DELETE ?id=xxx   — Elimina usuario por ID
  *
  * Restricciones:
@@ -27,6 +27,7 @@ import {
 import { withAuth } from '../../../server/middleware/auth';
 import { requireAnyRole } from '../../../server/middleware/permissions';
 import { logAuditEvent } from '../../../server/services/audit';
+import { canCreateUserRole, canManageTargetUser } from '../../../server/services/authorization';
 
 function parseRole(value: unknown): User['role'] | null {
   if (value === 'technician' || value === 'admin' || value === 'root') {
@@ -50,8 +51,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (!email || !password || !parsedRole) {
       return res.status(400).json({ error: 'Email, role and password are required' });
     }
+    if (parsedRole === 'technician' && (!name || !String(name).trim())) {
+      return res.status(400).json({ error: 'Technician name is required' });
+    }
     // Los admins solo pueden crear técnicos
-    if (isAdmin && parsedRole !== 'technician') {
+    if (!canCreateUserRole(actor.role, parsedRole)) {
       return res.status(403).json({ error: 'Admins can only create technician users' });
     }
 
@@ -78,7 +82,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (req.method === 'PATCH') {
-    const { id, email, role, password, disabled } = req.body || {};
+    const { id, email, name, role, password, disabled } = req.body || {};
     if (!id) {
       return res.status(400).json({ error: 'User id is required' });
     }
@@ -87,7 +91,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (isAdmin) {
       const allUsers = await listManagedUsers();
       const target = allUsers.find((u) => u.id === String(id));
-      if (!target || target.role !== 'technician') {
+      if (!target || !canManageTargetUser(actor.role, target.role)) {
         return res.status(403).json({ error: 'Admins can only edit technician users' });
       }
     }
@@ -99,7 +103,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         return res.status(400).json({ error: 'Invalid role' });
       }
       // Los admins no pueden ascender a nadie a admin
-      if (isAdmin && roleCandidate !== 'technician') {
+      if (!canCreateUserRole(actor.role, roleCandidate)) {
         return res.status(403).json({ error: 'Admins can only assign the technician role' });
       }
       parsedRole = roleCandidate;
@@ -108,6 +112,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
       const updated = await updateUser(String(id), {
         email: typeof email === 'string' ? email : undefined,
+        name: typeof name === 'string' ? name.trim() : undefined,
         role: parsedRole,
         password: typeof password === 'string' && password.length > 0 ? password : undefined,
         disabled: typeof disabled === 'boolean' ? disabled : undefined,
@@ -125,6 +130,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         targetId: updated.id,
         details: {
           email: updated.email,
+          name: updated.name,
           role: updated.role,
           disabled: updated.disabled,
           changedPassword: typeof password === 'string' && password.length > 0,
@@ -147,7 +153,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (isAdmin) {
       const allUsers = await listManagedUsers();
       const target = allUsers.find((u) => u.id === id);
-      if (!target || target.role !== 'technician') {
+      if (!target || !canManageTargetUser(actor.role, target.role)) {
         return res.status(403).json({ error: 'Admins can only delete technician users' });
       }
     }

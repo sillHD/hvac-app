@@ -18,6 +18,11 @@ import { withAuth } from '../../../server/middleware/auth';
 
 // GET /api/reports/list
 async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET');
+    return res.status(405).end('Method Not Allowed');
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const user = (req as any).user;
 

@@ -48,6 +48,7 @@ export async function callAI(req: AIRequest): Promise<AIResponse> {
 // stub-only OpenAI path (kept here so switching is just env var change)
 async function callOpenAI(req: AIRequest): Promise<AIResponse> {
   // TODO: implement using OpenAI SDK with process.env.OPENAI_KEY
+  void req;
   console.log('[aiProvider] callOpenAI placeholder');
   return { text: '<<openai mock response>>' };
 }

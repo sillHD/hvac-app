@@ -25,6 +25,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { User } from '../lib/types';
 import { useI18n } from '../i18n/I18nProvider';
+import { getAuthHeaders } from '../client/lib/authHeaders';
 
 interface HeaderProps {
   user: User | null;
@@ -94,6 +95,7 @@ export default function Header({ user, loading = false }: HeaderProps) {
       setLogoutLoading(true);
       await fetch('/api/auth/logout', {
         method: 'POST',
+        headers: getAuthHeaders(),
         credentials: 'include',
       });
 

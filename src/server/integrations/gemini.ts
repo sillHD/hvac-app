@@ -14,5 +14,6 @@
 
 export async function generateWithGemini(prompt: string) {
   // TODO: call Gemini API using server-side key
+  void prompt;
   return 'generated text';
 }

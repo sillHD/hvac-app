@@ -53,6 +53,7 @@ function mapRowsToReports(rows: string[][], fallbackType: 'invoice' | 'quote'): 
     'Report Type',
     'Quote Status',
     'Created By Email',
+    'Technician ID',
     'Technician',
     'Customer Name',
     'Customer Email',
@@ -91,6 +92,28 @@ function mapRowsToReports(rows: string[][], fallbackType: 'invoice' | 'quote'): 
     'Payment Date',
     'Last Synced',
   ];
+  const expectedHeaderWithoutTechnicianId = [
+    'Timestamp',
+    'Report Type',
+    'Quote Status',
+    'Created By Email',
+    'Technician',
+    'Customer Name',
+    'Customer Email',
+    'Customer Phone',
+    'Service Address',
+    'Work Type',
+    'Work Description',
+    'Job Price',
+    'Deposit Taken',
+    'Deposit Amount',
+    'QB Invoice ID',
+    'QB Invoice Number',
+    'Payment Status',
+    'Payment Amount',
+    'Payment Date',
+    'Last Synced',
+  ];
 
   let header = rows[0] || [];
   let dataRows = rows.slice(1);
@@ -102,12 +125,18 @@ function mapRowsToReports(rows: string[][], fallbackType: 'invoice' | 'quote'): 
 
   if (!hasTimestampHeader) {
     const firstRowLength = rows[0]?.length || 0;
-    header = firstRowLength >= expectedHeader.length ? expectedHeader : expectedLegacyHeader;
+    if (firstRowLength >= expectedHeader.length) {
+      header = expectedHeader;
+    } else if (firstRowLength >= expectedHeaderWithoutTechnicianId.length) {
+      header = expectedHeaderWithoutTechnicianId;
+    } else {
+      header = expectedLegacyHeader;
+    }
     dataRows = rows;
   }
 
   return dataRows.map((r) => {
-    const obj: any = {};
+    const obj: Record<string, string> = {};
     header.forEach((h, i) => (obj[h] = r[i]));
 
     const timestamp = obj.Timestamp || obj['Marca temporal'] || '';
@@ -147,6 +176,7 @@ function mapRowsToReports(rows: string[][], fallbackType: 'invoice' | 'quote'): 
       paymentAmount: Number.isFinite(paymentAmount) ? paymentAmount : undefined,
       paymentDate: obj['Payment Date'] || undefined,
       lastSynced: obj['Last Synced'] || undefined,
+      technicianId: obj['Technician ID'] || undefined,
       technicianName: obj['Technician Name'] || obj.Technician || '',
       customer: {
         name: customerName,
@@ -217,6 +247,7 @@ export async function createReport(report: Job) {
       reportType: report.reportType || 'invoice',
       quoteStatus: report.quoteStatus,
       createdByEmail: report.createdByEmail,
+      technicianId: report.technicianId,
       technician: report.technicianName,
       customerName: report.customer.name,
       customerEmail: report.customer.email,
@@ -257,7 +288,8 @@ export async function listReports(user?: User | null) {
       if (user && !canViewAllReports(user.role)) {
         return reports.filter((j) => {
           if (j.createdByEmail) return j.createdByEmail === user.email;
-          return j.technicianName === user.email;
+          if (j.technicianId) return j.technicianId === user.id;
+          return j.technicianName === user.email || j.technicianName === user.name;
         });
       }
       return reports;
@@ -270,7 +302,8 @@ export async function listReports(user?: User | null) {
   if (user && !canViewAllReports(user.role)) {
     return jobStore.filter((j) => {
       if (j.createdByEmail) return j.createdByEmail === user.email;
-      return j.technicianName === user.email;
+      if (j.technicianId) return j.technicianId === user.id;
+      return j.technicianName === user.email || j.technicianName === user.name;
     });
   }
   return jobStore;

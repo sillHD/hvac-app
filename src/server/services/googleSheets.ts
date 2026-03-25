@@ -229,6 +229,8 @@ function buildRowFromHeader(header: string[], data: GoogleFormInternal): string[
         return data.quoteStatus || '';
       case 'Created By Email':
         return data.createdByEmail || '';
+      case 'Technician ID':
+        return data.technicianId || '';
       case 'Technician Name':
       case 'Technician':
         return data.technician;
