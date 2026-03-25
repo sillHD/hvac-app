@@ -19,6 +19,7 @@ import { useAuth } from '../client/hooks/useAuth';
 import { getAuthHeaders } from '../client/lib/authHeaders';
 import { useI18n } from '../i18n/I18nProvider';
 import { canDeleteCustomers, canEditCustomers } from '../lib/utils/permissions';
+import { formatUsPhoneWithCountry } from '../lib/utils/phone';
 
 type Customer = {
   id?: string;
@@ -28,12 +29,23 @@ type Customer = {
   addresses?: string[];
 };
 
+type AddressDraft = { street: string; city: string; zip: string };
+
+function composeAddress(d: AddressDraft): string {
+  return [d.street.trim(), d.city.trim(), d.zip.trim()].filter(Boolean).join(', ');
+}
+function splitAddress(addr: string): AddressDraft {
+  const parts = addr.split(',').map((p) => p.trim());
+  return { street: parts[0] || '', city: parts[1] || '', zip: parts[2] || '' };
+}
+
 const emptyForm: Customer = {
   name: '',
   email: '',
-  phone: '',
+  phone: '+1 ',
   addresses: [],
 };
+const emptyAddress: AddressDraft = { street: '', city: '', zip: '' };
 
 export default function CustomersPage() {
   const { t } = useI18n();
@@ -43,6 +55,7 @@ export default function CustomersPage() {
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState('');
   const [form, setForm] = useState<Customer>(emptyForm);
+  const [addressDraft, setAddressDraft] = useState<AddressDraft>(emptyAddress);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const userRole = user?.role ?? null;
@@ -72,9 +85,10 @@ export default function CustomersPage() {
     setSaving(true);
     setNotice(null);
     try {
+      const composed = composeAddress(addressDraft);
       const payload = {
         ...form,
-        addresses: (form.addresses || []).filter(Boolean),
+        addresses: composed ? [composed] : [],
       };
       const res = await fetch('/api/customers', {
         method: editingId ? 'PATCH' : 'POST',
@@ -88,6 +102,7 @@ export default function CustomersPage() {
       }
 
       setForm(emptyForm);
+      setAddressDraft(emptyAddress);
       setEditingId(null);
       setNotice(t('customers.saved'));
       await loadCustomers(query);
@@ -98,12 +113,14 @@ export default function CustomersPage() {
 
   const startEdit = (customer: Customer) => {
     setEditingId(customer.id || null);
+    const firstAddr = (customer.addresses || [])[0] || '';
     setForm({
       name: customer.name,
       email: customer.email,
       phone: customer.phone,
       addresses: [...(customer.addresses || [])],
     });
+    setAddressDraft(splitAddress(firstAddr));
   };
 
   const handleDeleteCustomer = async (customerId: string) => {
@@ -167,28 +184,42 @@ export default function CustomersPage() {
             required
           />
           <input
-            type="text"
+            type="tel"
             value={form.phone}
-            onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
-            placeholder={t('customers.phone')}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, phone: formatUsPhoneWithCountry(e.target.value) }))
+            }
+            placeholder="+1 (305) 000-0000"
             className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-zinc-100"
             required
           />
-          <input
-            type="text"
-            value={(form.addresses || []).join(' | ')}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                addresses: e.target.value
-                  .split('|')
-                  .map((v) => v.trim())
-                  .filter(Boolean),
-              }))
-            }
-            placeholder={t('customers.addressesHelp')}
-            className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-zinc-100"
-          />
+          {/* Address split into street / city / zip */}
+          <div className="sm:col-span-2 grid gap-2 sm:grid-cols-3">
+            <input
+              type="text"
+              value={addressDraft.street}
+              onChange={(e) => setAddressDraft((d) => ({ ...d, street: e.target.value }))}
+              placeholder={t('customers.street')}
+              className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-zinc-100"
+            />
+            <input
+              type="text"
+              value={addressDraft.city}
+              onChange={(e) => setAddressDraft((d) => ({ ...d, city: e.target.value }))}
+              placeholder={t('customers.city')}
+              className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-zinc-100"
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              value={addressDraft.zip}
+              onChange={(e) =>
+                setAddressDraft((d) => ({ ...d, zip: e.target.value.replace(/\D/g, '') }))
+              }
+              placeholder={t('customers.zip')}
+              className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-zinc-100"
+            />
+          </div>
           <div className="sm:col-span-2 flex gap-2">
             <button
               type="submit"
@@ -203,6 +234,7 @@ export default function CustomersPage() {
                 onClick={() => {
                   setEditingId(null);
                   setForm(emptyForm);
+                  setAddressDraft(emptyAddress);
                 }}
                 className="rounded-full bg-zinc-500/20 text-zinc-200 px-4 py-2 hover:bg-zinc-500/35 transition-colors"
               >
