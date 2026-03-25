@@ -25,6 +25,7 @@ export type AuditAction =
   | 'auth.login.success'
   | 'auth.login.failed'
   | 'auth.login.blocked'
+  | 'auth.logout.global'
   | 'report.create'
   | 'report.update'
   | 'report.delete'
