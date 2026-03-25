@@ -12,18 +12,37 @@
  *                    Debe mantenerse en sincronía con la lógica del servidor
  *                    en api/reports/[id].ts.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Protected from '../components/Protected';
 import { Job } from '../lib/types';
 import { getAuthHeaders } from '../client/lib/authHeaders';
 import { useAuth } from '../client/hooks/useAuth';
 import { useI18n } from '../i18n/I18nProvider';
 
+const TAX_RATE = 6;
+
 export default function HistoryPage() {
   const { t } = useI18n();
   const formatMoney = (value: number | null | undefined) => {
     const amount = typeof value === 'number' && !isNaN(value) ? value : 0;
-    return `${amount.toFixed(2)}$`;
+    return `$${amount.toFixed(2)}`;
+  };
+  const formatWithTax = (value: number | null | undefined) => {
+    const base = typeof value === 'number' && !isNaN(value) ? value : 0;
+    return `$${(base * (1 + TAX_RATE / 100)).toFixed(2)}`;
+  };
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
   };
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,24 +56,26 @@ export default function HistoryPage() {
     return user.role === 'technician' && isOwner && editableStatus;
   };
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch('/api/reports/list', {
-          headers: getAuthHeaders(),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setJobs(data.reports || []);
-        }
-      } catch (err) {
-        console.error('failed to load jobs', err);
-      } finally {
-        setLoading(false);
+  const loadJobs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/reports/list', {
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setJobs(data.reports || []);
       }
+    } catch (err) {
+      console.error('failed to load jobs', err);
+    } finally {
+      setLoading(false);
     }
-    load();
   }, []);
+
+  useEffect(() => {
+    loadJobs();
+  }, [loadJobs]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -97,12 +118,22 @@ export default function HistoryPage() {
   return (
     <Protected>
       <div className="max-w-4xl mx-auto py-8 px-4 premium-section space-y-6">
-        <div className="space-y-3">
-          <span className="page-eyebrow">{t('history.eyebrow')}</span>
-          <h1 className="text-2xl font-bold premium-gradient-text">{t('history.title')}</h1>
-          <p className="page-subtitle">
-            {t('history.subtitle')}
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-3">
+            <span className="page-eyebrow">{t('history.eyebrow')}</span>
+            <h1 className="text-2xl font-bold premium-gradient-text">{t('history.title')}</h1>
+            <p className="page-subtitle">
+              {t('history.subtitle')}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={loadJobs}
+            disabled={loading}
+            className="shrink-0 mt-1 rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-700 disabled:opacity-50"
+          >
+            {loading ? t('ui.loading') : t('history.refresh')}
+          </button>
         </div>
 
         {notice && (
@@ -159,9 +190,11 @@ export default function HistoryPage() {
                       {job.reportType === 'quote' || job.quoteStatus ? t('history.quote') : t('history.invoice')}
                     </p>
                     <p>{t('history.tech')}: {job.technicianName}</p>
-                    <p>{new Date(job.completedAt).toLocaleDateString()}</p>
+                    <p>{formatDate(job.completedAt)}</p>
                     <p>
                       {t('history.price')}: {formatMoney(job.price)}
+                      {' '}&#8226;{' '}
+                      {t('history.total')}: {formatWithTax(job.price)}
                     </p>
                     <p>{t('history.status')}: {job.status}</p>
                     {canManage(job) && (

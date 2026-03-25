@@ -275,16 +275,24 @@ export async function createReport(report: Job) {
 }
 
 export async function listReports(user?: User | null) {
+  function sortByNewest(list: Job[]): Job[] {
+    return [...list].sort((a, b) => {
+      const ta = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+      const tb = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+      return tb - ta;
+    });
+  }
+
   // if sheet id present and we prefer it as primary store, read from sheet
   if (process.env.GOOGLE_SHEET_ID) {
     try {
       const invoiceRows = await readSheetValues();
       const quoteRows = await readQuoteSheetValues().catch(() => [] as string[][]);
 
-      const reports = [
+      const reports = sortByNewest([
         ...mapRowsToReports(invoiceRows, 'invoice'),
         ...mapRowsToReports(quoteRows, 'quote'),
-      ];
+      ]);
       if (user && !canViewAllReports(user.role)) {
         return reports.filter((j) => {
           if (j.createdByEmail) return j.createdByEmail === user.email;
@@ -300,13 +308,13 @@ export async function listReports(user?: User | null) {
   }
 
   if (user && !canViewAllReports(user.role)) {
-    return jobStore.filter((j) => {
+    return sortByNewest(jobStore.filter((j) => {
       if (j.createdByEmail) return j.createdByEmail === user.email;
       if (j.technicianId) return j.technicianId === user.id;
       return j.technicianName === user.email || j.technicianName === user.name;
-    });
+    }));
   }
-  return jobStore;
+  return sortByNewest(jobStore);
 }
 
 export async function getReport(id: string) {

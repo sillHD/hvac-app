@@ -185,14 +185,14 @@ function getLegacyAppendRow(data: GoogleFormInternal): string[] {
     nowIso,
     data.reportType || 'invoice',
     data.quoteStatus || '',
-    data.createdByEmail || '',
-    data.technician,
-    data.customerName,
-    data.customerEmail || '',
-    data.customerPhone,
-    data.serviceAddress,
-    data.workType,
-    data.workDescription,
+    safeText(data.createdByEmail || ''),
+    safeText(data.technician),
+    safeText(data.customerName),
+    safeText(data.customerEmail || ''),
+    safeText(data.customerPhone),
+    safeText(data.serviceAddress),
+    safeText(data.workType),
+    safeText(data.workDescription),
     String(data.jobPrice ?? 0),
     data.depositTaken ? 'Yes' : 'No',
     data.depositAmount != null ? String(data.depositAmount) : '',
@@ -211,6 +211,11 @@ function rangeToHeaderRange(range: string): string {
     return `${range.slice(0, bangIndex)}!A1:Z1`;
   }
   return 'A1:Z1';
+}
+
+/** Prefix values that Google Sheets would interpret as formulas (=, +, -, @). */
+function safeText(value: string): string {
+  return /^[=+\-@]/.test(value) ? `'${value}` : value;
 }
 
 function buildRowFromHeader(header: string[], data: GoogleFormInternal): string[] {
@@ -233,21 +238,21 @@ function buildRowFromHeader(header: string[], data: GoogleFormInternal): string[
         return data.technicianId || '';
       case 'Technician Name':
       case 'Technician':
-        return data.technician;
+        return safeText(data.technician);
       case 'Customer Name':
-        return data.customerName;
+        return safeText(data.customerName);
       case 'Customer Email':
-        return data.customerEmail || '';
+        return safeText(data.customerEmail || '');
       case 'Customer Phone':
-        return data.customerPhone;
+        return safeText(data.customerPhone);
       case 'Service Address':
-        return data.serviceAddress;
+        return safeText(data.serviceAddress);
       case 'Service Type':
       case 'Work Type':
-        return data.workType;
+        return safeText(data.workType);
       case 'Invoice Description':
       case 'Work Description':
-        return data.workDescription;
+        return safeText(data.workDescription);
       case 'Job Price':
         return String(data.jobPrice);
       case 'Deposit Taken':

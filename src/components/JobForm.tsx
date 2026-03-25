@@ -611,9 +611,10 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
                     />
                     <input
                       type="text"
+                      inputMode="numeric"
                       value={job.zipCode}
                       onChange={(e) => {
-                        const nextZip = e.target.value;
+                        const nextZip = e.target.value.replace(/\D/g, '');
                         setJob((j) => ({
                           ...j,
                           zipCode: nextZip,

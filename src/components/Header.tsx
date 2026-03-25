@@ -279,10 +279,10 @@ export default function Header({ user, loading = false }: HeaderProps) {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl border border-amber-500/30 bg-zinc-900 text-zinc-100 p-5 shadow-2xl">
             <h2 className="text-lg font-semibold text-amber-300">
-              ¿Seguro que quieres salir de la cuenta?
+              {t('nav.logout.confirmTitle')}
             </h2>
             <p className="mt-2 text-sm text-zinc-300">
-              Se cerrará la sesión actual en este dispositivo.
+              {t('nav.logout.confirmBody')}
             </p>
 
             <div className="mt-5 grid grid-cols-2 gap-2">
@@ -292,7 +292,7 @@ export default function Header({ user, loading = false }: HeaderProps) {
                 disabled={logoutLoading}
                 className="rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-700 disabled:opacity-60"
               >
-                Cancelar
+                {t('nav.logout.cancel')}
               </button>
               <button
                 type="button"
@@ -300,7 +300,7 @@ export default function Header({ user, loading = false }: HeaderProps) {
                 disabled={logoutLoading}
                 className="rounded-xl border border-amber-400/60 bg-amber-500/15 px-4 py-3 text-sm font-medium text-amber-300 transition-colors hover:bg-amber-500/25 disabled:opacity-60"
               >
-                {logoutLoading ? 'Saliendo...' : 'Sí, salir'}
+                {logoutLoading ? t('nav.logout.confirming') : t('nav.logout.confirm')}
               </button>
             </div>
           </div>
