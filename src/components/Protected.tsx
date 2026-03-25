@@ -17,25 +17,22 @@
  *     <MiContenidoProtegido />
  *   </Protected>
  */
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/router';
 
 interface ProtectedProps {
   children: ReactNode;
 }
 
+// useSyncExternalStore: server snapshot = false, client snapshot = true.
+// React hydrates matching the server (false → loading screen), then immediately
+// switches to the client value without a hydration mismatch warning.
+const subscribeNoop = () => () => {};
+
 export default function Protected({ children }: ProtectedProps) {
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
-  const hasToken = useMemo(() => {
-    if (!isMounted) return false;
-    if (typeof window === 'undefined') return false;
-    return !!localStorage.getItem('token');
-  }, [isMounted]);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
+  const hasToken = isMounted ? !!localStorage.getItem('token') : false;
 
   useEffect(() => {
     if (!isMounted) return;
@@ -44,7 +41,9 @@ export default function Protected({ children }: ProtectedProps) {
     }
   }, [isMounted, hasToken, router]);
 
-  if (!isMounted || !hasToken) return <div className="p-4 text-sm text-zinc-400">Cargando...</div>;
+  if (!isMounted || !hasToken) {
+    return <div className="p-4 text-sm text-zinc-400">Cargando...</div>;
+  }
 
   return <>{children}</>;
 }

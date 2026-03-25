@@ -17,9 +17,6 @@ import { User, Job, Customer } from './types';
 // Fictitious technicians
 export const mockUsers: User[] = [
   { id: 'u0', email: 'ismaelcorra@gmail.com', role: 'root', name: 'Ismael Corra' },
-  { id: 'u1', email: 'alice@hvac-example.com', role: 'technician', name: 'Alice Johnson' },
-  { id: 'u2', email: 'bob@hvac-example.com', role: 'technician', name: 'Bob Smith' },
-  { id: 'u3', email: 'carol@hvac-example.com', role: 'admin', name: 'Carol Nguyen' },
 ];
 
 // Fake customers
@@ -73,7 +70,7 @@ export const mockJobs: Job[] = [
     depositTaken: true,
     depositAmount: 425,
     materialsUsed: ['Compressor Model X200', 'Refrigerant R-410A'],
-    technicianName: mockUsers[1].name || mockUsers[1].email,
+    technicianName: mockUsers[0].name || mockUsers[0].email,
     completedAt: new Date('2026-03-05T14:15:00').toISOString(),
     photos: ['https://placehold.co/200x200'],
     status: 'invoice_created',
