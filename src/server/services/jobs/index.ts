@@ -207,6 +207,12 @@ export async function createReport(report: Job) {
 
   // if sheets are configured, also append a row
   if (process.env.GOOGLE_SHEET_ID) {
+    const addressParts = (report.serviceAddress || '').split(',').map((part) => part.trim());
+    const street = addressParts[0] || '';
+    const city = addressParts[1] || '';
+    const zipCode = addressParts[2] || '';
+    const taxes = 6;
+    const jobPrice = report.price ?? 0;
     const payload: GoogleFormInternal = {
       reportType: report.reportType || 'invoice',
       quoteStatus: report.quoteStatus,
@@ -218,9 +224,15 @@ export async function createReport(report: Job) {
       serviceAddress: report.serviceAddress,
       workType: report.serviceType,
       workDescription: report.invoiceDescription,
-      jobPrice: report.price ?? 0,
+      jobPrice,
       depositTaken: report.depositTaken,
       depositAmount: report.depositAmount,
+      phone: report.customer.phone,
+      street,
+      city,
+      zipCode,
+      taxes,
+      total: jobPrice + jobPrice * (taxes / 100),
     };
     try {
       await appendToSheet(payload);
