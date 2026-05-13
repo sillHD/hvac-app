@@ -1,0 +1,46 @@
+[
+  {
+    "id": "0",
+    "email": "ismaelcorra@gmail.com",
+    "name": "Root",
+    "role": "root",
+    "passwordHash": "$2b$12$KiiA0hnKjxR2COJ9PPLAQOO08v1OxKTyOhLY8bXa6rj6PkH5vCX0e",
+    "sessionVersion": 1,
+    "active": true,
+    "createdAt": "2026-05-13T20:25:05.887Z",
+    "updatedAt": "2026-05-13T20:25:06.176Z"
+  },
+  {
+    "id": "1",
+    "email": "carol@hvac-example.com",
+    "name": "Carol",
+    "role": "admin",
+    "passwordHash": "$2b$12$zAfAU.BKanR1UeGxtISKk.UESu7ZphOrcHB/a0S6Np48BLBRxEQOS",
+    "sessionVersion": 1,
+    "active": true,
+    "createdAt": "2026-05-13T20:27:59.006Z",
+    "updatedAt": "2026-05-13T20:27:59.304Z"
+  },
+  {
+    "id": "2",
+    "email": "alice@hvac-example.com",
+    "name": "Alice",
+    "role": "tech",
+    "passwordHash": "$2b$12$Jie2cp/b1AHifliHofQAgOoKK.NBEBJdOria3ppUcOhs355WCOuEe",
+    "sessionVersion": 1,
+    "active": true,
+    "createdAt": "2026-05-13T20:28:08.000Z",
+    "updatedAt": "2026-05-13T20:28:08.260Z"
+  },
+  {
+    "id": "3",
+    "email": "bob@hvac-example.com",
+    "name": "Bob",
+    "role": "tech",
+    "passwordHash": "$2b$12$iLtqzkZypKZETbZJZ3vwUe0wDMXMgvHlqpqBsnEUsgwJk1oFLCi7i",
+    "sessionVersion": 1,
+    "active": true,
+    "createdAt": "2026-05-13T20:28:16.888Z",
+    "updatedAt": "2026-05-13T20:28:17.157Z"
+  }
+]

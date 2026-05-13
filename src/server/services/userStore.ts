@@ -33,6 +33,23 @@ const redis = hasRedis
     })
   : null;
 
+let redisFallbackWarned = false;
+
+function handleRedisError(error: unknown, operation: string): boolean {
+  if (isVercelRuntime) {
+    throw error;
+  }
+
+  if (!redisFallbackWarned) {
+    redisFallbackWarned = true;
+    console.warn(
+      `[userStore] Redis unavailable during ${operation}. Falling back to local file storage (.data/users.json).`,
+      error
+    );
+  }
+  return true;
+}
+
 function ensurePersistentStorageForVercel() {
   // In Vercel filesystem is ephemeral; without Redis users will disappear on deploy/cold starts.
   if (isVercelRuntime && !redis) {
@@ -59,12 +76,16 @@ async function writeLocalUsers(users: StoredUser[]): Promise<void> {
 export async function listUsersStore(): Promise<StoredUser[]> {
   ensurePersistentStorageForVercel();
   if (redis) {
-    const emails = (await redis.smembers<string[]>('users:index')) ?? [];
-    if (!emails.length) return [];
-    const users = await Promise.all(
-      emails.map((e) => redis.get<StoredUser>(`user:${e}`))
-    );
-    return users.filter(Boolean) as StoredUser[];
+    try {
+      const emails = (await redis.smembers<string[]>('users:index')) ?? [];
+      if (!emails.length) return [];
+      const users = await Promise.all(
+        emails.map((e) => redis.get<StoredUser>(`user:${e}`))
+      );
+      return users.filter(Boolean) as StoredUser[];
+    } catch (error) {
+      handleRedisError(error, 'listUsersStore');
+    }
   }
   return readLocalUsers();
 }
@@ -73,7 +94,11 @@ export async function getUserByEmailStore(email: string): Promise<StoredUser | n
   ensurePersistentStorageForVercel();
   const normalized = email.trim().toLowerCase();
   if (redis) {
-    return (await redis.get<StoredUser>(`user:${normalized}`)) ?? null;
+    try {
+      return (await redis.get<StoredUser>(`user:${normalized}`)) ?? null;
+    } catch (error) {
+      handleRedisError(error, 'getUserByEmailStore');
+    }
   }
   const users = await readLocalUsers();
   return users.find((u) => u.email.toLowerCase() === normalized) ?? null;
@@ -92,9 +117,13 @@ export async function upsertUserStore(user: StoredUser): Promise<void> {
   const payload: StoredUser = { ...user, email: normalized, updatedAt: now, createdAt: user.createdAt || now };
 
   if (redis) {
-    await redis.set(`user:${normalized}`, payload);
-    await redis.sadd('users:index', normalized);
-    return;
+    try {
+      await redis.set(`user:${normalized}`, payload);
+      await redis.sadd('users:index', normalized);
+      return;
+    } catch (error) {
+      handleRedisError(error, 'upsertUserStore');
+    }
   }
 
   const users = await readLocalUsers();
@@ -109,9 +138,13 @@ export async function deleteUserStore(email: string): Promise<void> {
   const normalized = email.trim().toLowerCase();
 
   if (redis) {
-    await redis.del(`user:${normalized}`);
-    await redis.srem('users:index', normalized);
-    return;
+    try {
+      await redis.del(`user:${normalized}`);
+      await redis.srem('users:index', normalized);
+      return;
+    } catch (error) {
+      handleRedisError(error, 'deleteUserStore');
+    }
   }
 
   const users = await readLocalUsers();

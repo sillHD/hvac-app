@@ -106,6 +106,27 @@ async function ensureSeedUsers(): Promise<void> {
       role: 'root',
       name: 'Root',
     },
+    {
+      id: '1',
+      email: 'carol@hvac-example.com',
+      password: process.env.ADMIN_CAROL_PASSWORD || '',
+      role: 'admin',
+      name: 'Carol',
+    },
+    {
+      id: '2',
+      email: 'alice@hvac-example.com',
+      password: process.env.TECH_ALICE_PASSWORD || '',
+      role: 'tech',
+      name: 'Alice',
+    },
+    {
+      id: '3',
+      email: 'bob@hvac-example.com',
+      password: process.env.TECH_BOB_PASSWORD || '',
+      role: 'tech',
+      name: 'Bob',
+    },
   ];
 
   for (const seed of seeds) {
