@@ -1,25 +1,25 @@
 /**
- * api/reports/[id].ts — Operaciones sobre un reporte específico.
+ * Internal implementation detail.
  *
- * Métodos: GET, PATCH, DELETE
- * Acceso: withAuth (todos los autenticados)
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
  * Control de acceso:
  *  GET:
- *    - admin/root: puede ver cualquier reporte
- *    - technician: solo puede ver sus propios reportes
+ * Internal implementation detail.
+ * Internal implementation detail.
  *  PATCH / DELETE:
- *    - admin/root: puede editar y eliminar cualquier reporte
- *    - technician: puede editar/eliminar SOLO sus propios reportes
+ * Internal implementation detail.
+ * Internal implementation detail.
  *      en estados 'draft', 'submitted' o 'processing'
  *
- * Respuestas:
- *  200  — { ok: true, report: Job } para PATCH | { ok: true } para DELETE
- *  400  — Parámetros inválidos
- *  401  — Sin autenticación
- *  403  — Sin permiso para ese reporte
- *  404  — Reporte no encontrado
- *  405  — Método no permitido
+ * Responses:
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { deleteReport, getReport, updateReport } from '../../../server/services/jobs';
@@ -27,7 +27,7 @@ import { canEditOrDeleteReports, canTechnicianEditOwnReports } from '../../../se
 import { withAuth } from '../../../server/middleware/auth';
 import { logAuditEvent } from '../../../server/services/audit';
 
-/** Determina si el usuario es el creador/técnico del reporte */
+/* Internal implementation detail. */
 function isOwnerReport(
   report: { createdByEmail?: string; technicianId?: string; technicianName?: string },
   user: { id: string; email: string; name?: string }
@@ -37,7 +37,7 @@ function isOwnerReport(
   return report.technicianName === user.email || report.technicianName === user.name;
 }
 
-/** Los técnicos solo pueden mutar reportes en estados editables */
+/* Internal implementation detail. */
 function canTechnicianMutateReportStatus(status: string | undefined): boolean {
   return status === 'draft' || status === 'submitted' || status === 'processing';
 }

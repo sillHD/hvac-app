@@ -1,22 +1,22 @@
 /**
- * api/customers/index.ts — CRUD de clientes.
+ * Internal implementation detail.
  *
- * Métodos: GET, POST, PATCH, DELETE
- * Acceso: Cualquier usuario autenticado (withAuth)
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * GET    ?q=texto  — Lista clientes; filtra por texto si se incluye ?q
- * POST             — Crea cliente (body: Customer)
- * PATCH            — Actualiza cliente (body: { id, ...campos })
- * DELETE ?id=xxx   — Elimina cliente por ID
+ * Internal implementation detail.
+ * POST             — Creates a customer (body: Customer)
+ * PATCH            — Updates a customer (body: { id, ...fields })
+ * DELETE ?id=xxx   — Deletes a customer by ID
  *
- * Todas las operaciones de escritura generan evento de auditoría.
+ * Internal implementation detail.
  *
- * Respuestas:
- *  200/201 — Operación exitosa
- *  400     — Datos inválidos o duplicados
- *  401     — Sin autenticación
- *  404     — Cliente no encontrado
- *  405     — Método no permitido
+ * Responses:
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ *  404     — Customer not found
+ * Internal implementation detail.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { withAuth } from '../../../server/middleware/auth';

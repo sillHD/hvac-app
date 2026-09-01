@@ -1,55 +1,55 @@
 /**
- * authSecurity.ts — Rate limiting para intentos de login.
+ * Internal implementation detail.
  *
- * Protege el endpoint /api/auth/login contra ataques de fuerza bruta
- * rastreando los intentos fallidos tanto por email como por dirección IP.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Reglas:
- *  - Ventana de tiempo: ATTEMPT_WINDOW_MS (15 minutos)
- *  - Intentos máximos: MAX_ATTEMPTS (5) en la ventana
- *  - Duración del bloqueo: BLOCK_MS (10 minutos) al superar el límite
- *  - El bloqueo se aplica a nivel de EMAIL y a nivel de IP por separado.
- *    (basta con que uno esté bloqueado para bloquear el intento)
+ * Rules:
+ *  - Time window: ATTEMPT_WINDOW_MS (15 minutes)
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
  * Store:
- *  - En memoria (se reinicia con el servidor). Para producción considerar Redis.
+ * Internal implementation detail.
  *
- * API pública:
- *  getLoginRateLimitStatus(email, ip) — Verifica si está bloqueado
- *  registerLoginFailure(emailKey, ipKey) — Registra un intento fallido
- *  registerLoginSuccess(emailKey, ipKey) — Limpia el estado al loguearse correctamente
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 
-/** Estado de intentos de login para una clave (email o IP) */
+/* Internal implementation detail. */
 interface LoginAttemptState {
-  attempts: number;        // Intentos fallidos en la ventana activa
-  blockedUntilMs: number;  // Timestamp hasta el cual está bloqueado (0 = libre)
-  lastAttemptAtMs: number; // Timestamp del último intento (para expirar la ventana)
+  attempts: number;        // Failed attempts in the active window.
+  blockedUntilMs: number;  // Timestamp until which the identity is blocked (0 = clear).
+  lastAttemptAtMs: number; // Timestamp of the last attempt, used to expire the window.
 }
 
-/** Ventana de 15 minutos para contar intentos */
+/* Internal implementation detail. */
 const ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 
-/** Duración del bloqueo al superar el límite: 10 minutos */
+/* Internal implementation detail. */
 const BLOCK_MS = 10 * 60 * 1000;
 
-/** Número máximo de fallos antes de bloquear */
+/* Internal implementation detail. */
 const MAX_ATTEMPTS = 5;
 
-/** Map en memoria: clave (email: o ip:) → estado de intentos */
+/* Internal implementation detail. */
 const attemptsByKey = new Map<string, LoginAttemptState>();
 
-/** Timestamp actual en ms */
+/** Current timestamp in milliseconds. */
 function nowMs(): number {
   return Date.now();
 }
 
-/** Normaliza una clave a minúsculas sin espacios para comparaciones consistentes */
+/* Internal implementation detail. */
 function normalizeKey(input: string): string {
   return (input || '').trim().toLowerCase();
 }
 
-/** Obtiene o inicializa el estado para una clave dada */
+/* Internal implementation detail. */
 function getState(key: string): LoginAttemptState {
   const current = attemptsByKey.get(key);
   if (!current) {
@@ -61,8 +61,8 @@ function getState(key: string): LoginAttemptState {
 }
 
 /**
- * Si ha pasado más de ATTEMPT_WINDOW_MS desde el último intento,
- * resetea el contador (la ventana de tiempo ha expirado).
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 function resetIfWindowExpired(state: LoginAttemptState) {
   const now = nowMs();
@@ -73,11 +73,11 @@ function resetIfWindowExpired(state: LoginAttemptState) {
 }
 
 /**
- * Verifica el estado actual de rate limit para un email e IP específicos.
+ * Internal implementation detail.
  * @returns { blocked, blockedSeconds, emailKey, ipKey }
- *   - blocked: true si el intento debe ser rechazado
- *   - blockedSeconds: segundos restantes de bloqueo
- *   - emailKey/ipKey: claves normalizadas para pasar a registerLoginFailure/Success
+ * Internal implementation detail.
+ *   - blockedSeconds: remaining block duration in seconds
+ * Internal implementation detail.
  */
 export function getLoginRateLimitStatus(rawEmail: string, rawIp: string) {
   const emailKey = `email:${normalizeKey(rawEmail)}`;
@@ -89,7 +89,7 @@ export function getLoginRateLimitStatus(rawEmail: string, rawIp: string) {
   resetIfWindowExpired(ipState);
 
   const now = nowMs();
-  // Bloqueado si cualquiera de los dos (email o IP) está dentro del período de bloqueo
+  // Internal implementation detail.
   const blockedUntilMs = Math.max(emailState.blockedUntilMs, ipState.blockedUntilMs);
 
   return {
@@ -101,8 +101,8 @@ export function getLoginRateLimitStatus(rawEmail: string, rawIp: string) {
 }
 
 /**
- * Registra un intento fallido para email e IP.
- * Si se alcanza MAX_ATTEMPTS, bloquea por BLOCK_MS y resetea el contador.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 export function registerLoginFailure(emailKey: string, ipKey: string) {
   const now = nowMs();
@@ -114,15 +114,15 @@ export function registerLoginFailure(emailKey: string, ipKey: string) {
     state.attempts += 1;
     state.lastAttemptAtMs = now;
     if (state.attempts >= MAX_ATTEMPTS) {
-      state.blockedUntilMs = now + BLOCK_MS; // activar bloqueo
-      state.attempts = 0;                    // resetear contador para próxima ventana
+      state.blockedUntilMs = now + BLOCK_MS; // Activate the block.
+      state.attempts = 0;                    // Reset the count for the next window.
     }
   }
 }
 
 /**
- * Limpia el estado de rate limit al loguearse correctamente.
- * Evita que intentos previos fallidos afecten futuros logins.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 export function registerLoginSuccess(emailKey: string, ipKey: string) {
   for (const key of [emailKey, ipKey]) {

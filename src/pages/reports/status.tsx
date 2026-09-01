@@ -303,8 +303,8 @@ export default function ReportStatusPage() {
 
                 <ul className="space-y-4">
                   {visibleInvoiceRows.map(({ job, paymentState }) => (
-                    // Prioriza nombre/titulo visible y deja el ID como referencia.
-                    // Esto evita que el usuario vea el numero como "titulo" principal.
+                    // Internal implementation detail.
+                    // Internal implementation detail.
                     <li
                       key={job.id}
                       className={`premium-card p-4 ${

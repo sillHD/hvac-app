@@ -1,22 +1,22 @@
 /**
- * jobStatus.ts — Utilidades para el ciclo de vida de estados de un trabajo.
+ * Job status lifecycle utilities.
  *
- * Exporta:
- *  jobStatusOrder  — Array ordenado del flujo de estados (draft → paid)
- *  jobStatusLabels — Etiquetas en español para mostrar en la UI
- *  isFinalStatus() — true si el estado es terminal (no puede avanzar)
- *  canTransition() — Valida si una transición de estado es permitida
+ * Exports:
+ *  jobStatusOrder  — Ordered status-flow array (draft → paid)
+ *  jobStatusLabels — English labels for display in the UI
+ *  isFinalStatus() — Whether a status is terminal
+ *  canTransition() — Whether a status transition is permitted
  *
- * Flujo normal de un Job:
+ * Standard job flow:
  *   draft → submitted → processing → invoice_created → completed → partial_paid → paid
  *
- * Estados especiales:
- *   cancelled — Se puede llegar desde cualquier estado no final
- *   error     — Estado de error, puede venir de cualquier punto
+ * Special statuses:
+ *   cancelled — Can be reached from any non-final status
+ *   error     — Can occur at any point
  *
- * NOTA: canTransition() solo permite movimientos hacia adelante en jobStatusOrder.
- * Si necesitas permitir regresiones (como de 'completed' a 'processing'),
- * ajusta la lógica en la función directamente.
+ * canTransition() permits only forward transitions in jobStatusOrder.
+ * Adjust the function directly if transitions such as completed to processing
+ * must be supported.
  */
 import { JobStatus } from '../types';
 
@@ -35,14 +35,14 @@ export const jobStatusOrder: JobStatus[] = [
 
 // friendly labels for UI (not expose raw values)
 export const jobStatusLabels: Record<JobStatus, string> = {
-  draft: 'Borrador',
-  submitted: 'Enviado',
-  processing: 'Procesando',
-  invoice_created: 'Factura generada',
-  completed: 'Completado',
-  partial_paid: 'Pago parcial',
-  paid: 'Pagado',
-  cancelled: 'Cancelado',
+  draft: 'Draft',
+  submitted: 'Submitted',
+  processing: 'Processing',
+  invoice_created: 'Invoice created',
+  completed: 'Completed',
+  partial_paid: 'Partial payment',
+  paid: 'Paid',
+  cancelled: 'Cancelled',
   error: 'Error',
 };
 

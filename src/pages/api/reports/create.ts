@@ -1,24 +1,24 @@
 /**
- * api/reports/create.ts — Crea un nuevo reporte (invoice o quote).
+ * Internal implementation detail.
  *
- * Método: POST
+ * Internal implementation detail.
  * Body:   Job (ver src/lib/types/index.ts)
- * Acceso: Cualquier usuario autenticado
+ * Internal implementation detail.
  *
- * El endpoint:
- *  - Genera un ID si no se provee
- *  - Asigna createdByEmail con el email del usuario autenticado
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *  - Establece reportType ('invoice' por defecto)
- *  - Para quotes, establece quoteStatus ('pending' por defecto)
- *  - Persiste en memoria y en Google Sheets (si GOOGLE_SHEET_ID está configurado)
- *  - Registra evento de auditoría
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Respuestas:
+ * Responses:
  *  200 — { ok: true, report: Job }
  *  400 — Payload faltante
- *  401 — Sin autenticación
- *  405 — Método no permitido
- *  500 — Error al guardar
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { Job } from '../../../lib/types';

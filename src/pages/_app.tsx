@@ -1,15 +1,15 @@
 /**
- * _app.tsx — Punto de entrada global de la aplicación Next.js.
+ * Internal implementation detail.
  *
- * Envuelve TODAS las páginas con:
- *  - I18nProvider: contexto de idioma (ES/EN), detecta locale guardado en localStorage
- *  - Layout: estructura base con Header y contenedor de página
+ * Internal implementation detail.
+ *  - I18nProvider: English localization context
+ * Internal implementation detail.
  *
- * Además registra el Service Worker en producción para funcionalidad offline/PWA.
- * El archivo public/sw.js debe existir para que esto funcione.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Para agregar un proveedor global nuevo (tema, notificaciones, etc.),
- * añádelo envolviendo <Layout> aquí.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";

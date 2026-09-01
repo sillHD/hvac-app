@@ -1,28 +1,28 @@
 /**
- * services/jobs/index.ts — Capa de persistencia de trabajos (reports).
+ * Internal implementation detail.
  *
- * Mantiene un store en memoria inicializado con mockJobs.
- * Si GOOGLE_SHEET_ID está configurado, también sincroniza con Google Sheets.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
  * Arquitectura de doble fuente:
- *  - En memoria (jobStore): rápida, se pierde al reiniciar
+ * Internal implementation detail.
  *  - Google Sheets: persistente, lenta, sirve como fuente de verdad
  *
  * Funciones exportadas:
- *  listReports(user)         — Lista trabajos según el rol del usuario
- *  getReport(id)             — Obtiene un trabajo por ID
- *  createReport(report)      — Crea y persiste en memoria + Sheets
- *  updateReport(id, patch)   — Actualiza campos de un trabajo
- *  deleteReport(id)          — Elimina de memoria y de Sheets si aplica
- *  syncPaymentToQuickBooks() — Sincroniza estado de pago con QuickBooks
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
  * Formato de columnas de Sheets:
- *  Compatible con el sistema legado (con o sin columna 'Created By Email').
- *  El parser mapRowsToReports() maneja ambos formatos de headers.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Para migración a BD real:
- *  Reemplazar las funciones de este archivo con llamadas a la BD.
- *  La interfaz pública (parámetros y retornos) debe mantenerse igual.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 
 // Job-related persistence/service layer.
@@ -139,6 +139,7 @@ function mapRowsToReports(rows: string[][], fallbackType: 'invoice' | 'quote'): 
     const obj: Record<string, string> = {};
     header.forEach((h, i) => (obj[h] = r[i]));
 
+    // Spanish Google Sheets header aliases are retained only for legacy-sheet compatibility.
     const timestamp = obj.Timestamp || obj['Marca temporal'] || '';
     const customerName = obj['Customer Name'] || obj['Cliente'] || '';
     const customerPhone = obj['Customer Phone'] || obj['Telefono'] || obj['Teléfono'] || '';

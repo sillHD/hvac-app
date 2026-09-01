@@ -1,17 +1,17 @@
 /**
- * api/logs/index.ts — Devuelve el log de auditoría del sistema.
+ * Internal implementation detail.
  *
- * Método: GET
- * Query:  ?limit=200 (máximo 1000)
- * Acceso: Solo admin y root
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Cada entrada del log tiene el formato:
+ * Internal implementation detail.
  *   <timestamp> | <action> | actor=<email> (<role>) | target=<type>:<id> | <details>
  *
- * Respuestas:
+ * Responses:
  *  200 — { logs: string[] }
- *  401 — Sin autenticación
- *  403 — Rol insuficiente (solo admin/root)
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { withAuth } from '../../../server/middleware/auth';

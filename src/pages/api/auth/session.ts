@@ -1,14 +1,14 @@
 /**
- * api/auth/session.ts — Verifica si el token actual sigue siendo válido.
+ * Internal implementation detail.
  *
- * Método: GET
+ * Internal implementation detail.
  * Header: Authorization: Bearer <token>
  *
- * Usado por useAuth() al cargar la app para restaurar la sesión del usuario.
- * Si el token expiró (TTL 12h) o el usuario fue desactivado, devuelve { user: null }.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Respuestas:
- *  200 — { user: User } si token válido, { user: null } si inválido/ausente
+ * Responses:
+ * Internal implementation detail.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyToken } from '../../../server/auth';

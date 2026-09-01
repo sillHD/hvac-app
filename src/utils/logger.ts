@@ -1,15 +1,15 @@
 /**
  * logger.ts — Utilidad simple de logging.
  *
- * Proporciona funciones de log consistentes con prefijos [INFO] y [ERROR].
- * Se puede reemplazar fácilmente por una librería más robusta en producción:
- *   - winston: logging con niveles, transports (archivo, consola, Datadog)
- *   - pino: alto rendimiento, ideal para Next.js API routes
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
  * Uso:
  *   import { logInfo, logError } from '@/utils/logger';
- *   logInfo('Mensaje', { datos: 'extra' });
- *   logError('Error al guardar', err);
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 
 // Simple logging utility, can be expanded or replaced with winston/pino

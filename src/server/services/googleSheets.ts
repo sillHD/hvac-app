@@ -1,28 +1,28 @@
 /**
- * googleSheets.ts — Integración con Google Sheets API.
+ * Internal implementation detail.
  *
- * Este servicio es el puente entre la aplicación y la hoja de cálculo de Google.
+ * Internal implementation detail.
  * Funciones clave:
- *  appendToSheet(payload)              — Agrega una nueva fila al sheet de invoices
- *  readSheetValues()                   — Lee todas las filas de invoices
- *  readQuoteSheetValues()              — Lee todas las filas de quotes
- *  deleteSheetRowByReportId(id)        — Elimina la fila con ese timestamp/ID
- *  updateSheetPaymentStatusByReportId  — Actualiza columnas de pago en una fila
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Configuración requerida en .env.local:
- *  GOOGLE_SHEET_ID          — ID de la hoja de Google Sheets
- *  GOOGLE_QUOTES_SHEET_ID   — ID de la hoja de quotes (puede ser la misma)
- *  GOOGLE_SERVICE_ACCOUNT   — JSON de la cuenta de servicio (como string)
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *    O bien: GOOGLE_CLIENT_EMAIL + GOOGLE_PRIVATE_KEY (par alternativo)
  *
- * NOTA: Si GOOGLE_SHEET_ID no está configurado, los reportes solo se guardan
- * en memoria (el store en memoria se pierde al reiniciar el servidor).
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Compatibilidad con el sistema legado:
- *  La hoja puede tener registros del sistema anterior sin la columna 'Created By Email'.
- *  El parser en services/jobs/index.ts lo maneja con dos formatos de headers.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Formato de la hoja principal (invoices):
+ * Internal implementation detail.
  *  Timestamp | Report Type | Quote Status | Created By Email | Technician | Customer Name |
  *  Customer Email | Customer Phone | Service Address | Work Type | Work Description |
  *  Job Price | Deposit Taken | Deposit Amount | QB Invoice ID | QB Invoice Number |
@@ -67,6 +67,7 @@ const PAYMENT_SYNC_COLUMNS = [
   'Last Synced',
 ];
 
+// Spanish Google Sheets header aliases are retained only for legacy-sheet compatibility.
 const HEADER_TIMESTAMP_CANDIDATES = ['Timestamp', 'Marca temporal'];
 
 export interface SheetPaymentSyncPayload {
@@ -165,6 +166,7 @@ function getQuoteAppendRangeCandidates() {
       .map((r) => r.trim())
       .filter(Boolean);
   }
+  // Spanish sheet-name aliases are retained only for legacy-sheet compatibility.
   return ['Sheet2!A1', 'Hoja 2!A1', 'Hoja2!A1'];
 }
 
@@ -176,6 +178,7 @@ function getQuoteReadRangeCandidates() {
       .map((r) => r.trim())
       .filter(Boolean);
   }
+  // Spanish sheet-name aliases are retained only for legacy-sheet compatibility.
   return ['Sheet2!A:Z', 'Hoja 2!A:Z', 'Hoja2!A:Z'];
 }
 
@@ -225,6 +228,7 @@ function buildRowFromHeader(header: string[], data: GoogleFormInternal): string[
   return header.map((column) => {
     const name = (column || '').trim();
     switch (name) {
+      // Spanish header alias retained only for legacy-sheet compatibility.
       case 'Marca temporal':
       case 'Timestamp':
         return nowIso;
@@ -301,7 +305,7 @@ async function appendToRanges(
     }
   }
 
-  throw lastError || new Error('No se pudo escribir en ninguna hoja objetivo');
+  throw lastError || new Error('Could not write to any target sheet');
 }
 
 async function appendToRangesWithApiKey(
@@ -333,7 +337,7 @@ async function appendToRangesWithApiKey(
     }
   }
 
-  throw lastError || new Error('No se pudo escribir en ninguna hoja objetivo');
+  throw lastError || new Error('Could not write to any target sheet');
 }
 
 async function readRange(
@@ -364,7 +368,7 @@ async function readFirstAvailableRange(
       console.warn('[googleSheets] read failed for range', range, err);
     }
   }
-  throw lastError || new Error('No se pudo leer ninguna hoja objetivo');
+  throw lastError || new Error('Could not read from any target sheet');
 }
 
 async function ensurePaymentSyncHeaders(

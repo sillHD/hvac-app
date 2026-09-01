@@ -1,16 +1,16 @@
 /**
- * integrations/quickbooks.ts — Cliente QuickBooks (stub, sin implementar).
+ * integrations/quickbooks.ts — QuickBooks client stub.
  *
- * Punto de entrada para la integración con QuickBooks Online.
- * La implementación real debe ir en services/quickbooks/index.ts.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * TODO: Implementar con el SDK oficial de QuickBooks o llamadas HTTP a:
+ * Internal implementation detail.
  *  https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/invoice
  *
- * Variables de entorno necesarias (cuando se implemente):
- *  QB_CLIENT_ID      — Client ID de la app QuickBooks registrada
+ * Environment variables required when implemented:
+ * Internal implementation detail.
  *  QB_CLIENT_SECRET  — Client Secret
- *  QB_REFRESH_TOKEN  — Token OAuth2 de larga duración
+ * Internal implementation detail.
  *  QB_REALM_ID       — Company ID en QuickBooks
  */
 

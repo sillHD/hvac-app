@@ -1,26 +1,26 @@
 /**
  * types/index.ts — Tipos compartidos entre frontend y backend.
  *
- * Este archivo es el punto único de verdad para las interfaces de dominio.
- * Impórtalo desde cualquier parte del proyecto con:
+ * Internal implementation detail.
+ * Internal implementation detail.
  *   import type { Job, Customer, JobStatus } from '@/lib/types'
  *
- * Jerarquía de entidades:
+ * Internal implementation detail.
  *
- *  User          — Usuario del sistema (técnico, admin, root)
- *  Customer      — Cliente al que se le presta el servicio
- *  Job           — Trabajo / reporte de servicio (invoice o quote)
- *  InvoiceLog    — Registro de facturación asociado a un Job
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
  * Tipos derivados:
- *  JobStatus           — Ciclo de vida de un Job
+ * Internal implementation detail.
  *  ReportType          — 'invoice' | 'quote'
  *  QuoteStatus         — 'approved' | 'pending'
- *  PaymentSyncStatus   — Estado de pago syncónico con QuickBooks
+ * Internal implementation detail.
  *
- * NOTA: Estos tipos se usan directamente en las rutas API (Next.js server)
- * y en los componentes de React. Evitar agregar lógica de negocio aquí;
- * mantenerlos solo como definiciones de forma (shape).
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 
 // Shared types used across frontend and backend

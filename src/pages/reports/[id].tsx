@@ -1,20 +1,20 @@
 /**
- * reports/[id].tsx — Página de detalle de un reporte específico.
+ * Internal implementation detail.
  *
- * Muestra toda la información de un trabajo: tipo, estado, cliente,
- * descripción, precio, depósito, materiales, fotos, logs internos.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Según permisos, permite:
- *  - Cambiar el estado del reporte
- *  - Eliminar el reporte
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
  * Control de acceso (canManage):
- *  - admin/root: siempre puede gestionar
- *  - technician: solo si es el creador Y el estado es editable
+ * Internal implementation detail.
+ * Internal implementation detail.
  *    (draft, submitted, processing)
  *
- * Los logs de actividad interna solo se muestran a admin/root
- * (el servidor los omite para técnicos en GET /api/reports/[id]).
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
