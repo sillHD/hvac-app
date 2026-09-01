@@ -1,16 +1,16 @@
 /**
- * api/reports/list.ts — Lista los reportes según el rol del usuario.
+ * Internal implementation detail.
  *
- * Método: GET
- * Acceso: Cualquier usuario autenticado
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Comportamiento según rol:
- *  - admin/root: ve todos los reportes
- *  - technician: solo ve reportes propios (por createdByEmail o technicianName)
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Respuestas:
+ * Responses:
  *  200 — { reports: Job[] }
- *  401 — Sin autenticación
+ * Internal implementation detail.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { listReports } from '../../../server/services/jobs';

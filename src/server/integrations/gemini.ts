@@ -1,12 +1,12 @@
 /**
- * integrations/gemini.ts — Cliente Gemini AI (stub, sin implementar).
+ * integrations/gemini.ts — Gemini AI client stub.
  *
- * Punto de entrada para integración directa con Gemini.
- * Los consumidores del proyecto deben usar aiProvider.ts en su lugar,
- * que abstrae el proveedor de IA y permite cambiar a OpenAI con solo
- * modificar la variable de entorno AI_PROVIDER.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Variable de entorno necesaria:
+ * Required environment variable:
  *  GEMINI_API_KEY — Clave de API de Google AI Studio
  */
 

@@ -21,7 +21,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
     initializedFromStorageRef.current = true;
     const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (saved !== 'es' && saved !== 'en') return;
+    if (saved !== 'en') return;
     if (saved === locale) return;
 
     // Defer state update until after hydration commit.

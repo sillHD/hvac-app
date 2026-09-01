@@ -1,12 +1,12 @@
 /**
- * login.tsx — Página de inicio de sesión.
+ * Internal implementation detail.
  *
- * Renderiza el formulario de login (componente LoginForm).
+ * Internal implementation detail.
  * Al login exitoso, redirige al dashboard.
  *
- * NOTA: No redirige si el usuario ya está logueado (el dashboard lo maneja
- * mediante Protected). Si quieres forzar redirección previa, usa useAuth()
- * y router.replace('/dashboard') si user != null.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 import { useRouter } from 'next/router';
 import React from 'react';

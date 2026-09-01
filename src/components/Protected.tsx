@@ -1,15 +1,15 @@
 /**
- * Protected.tsx — Guard de autenticación del lado del cliente.
+ * Internal implementation detail.
  *
  * Comportamiento:
- *  - Si el usuario no está autenticado, redirige a /login
- *  - Mientras carga (loading=true), muestra indicador de carga
- *  - Si el usuario está autenticado, renderiza {children}
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
  * IMPORTANTE:
- *  - Este guard es solo del lado cliente (JavaScript). No reemplaza la
- *    protección del servidor en las rutas API (withAuth).
- *  - En producción, añadir middleware de Next.js (middleware.ts) para
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *    proteger rutas a nivel de servidor/CDN.
  *
  * Uso:

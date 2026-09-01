@@ -1,17 +1,17 @@
 /**
- * customers.tsx — Página de gestión de clientes.
+ * Internal implementation detail.
  *
  * Funcionalidades:
- *  - Lista clientes con búsqueda en tiempo real (filtra por nombre, email, teléfono, dirección)
- *  - Crear nuevo cliente (formulario con nombre, email, teléfono, direcciones)
- *  - Editar cliente existente (carga datos en el formulario, envía PATCH)
- *  - Eliminar cliente (con confirmación)
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Las direcciones se editan en un único campo de texto separado por |  (pipe),
- * y se parsean al enviar para crear el array de strings.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Acceso: Cualquier usuario autenticado (Protected).
- * CRUD: Llama a /api/customers con los métodos GET, POST, PATCH, DELETE.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 import React, { FormEvent, useEffect, useState } from 'react';
 import Protected from '../components/Protected';

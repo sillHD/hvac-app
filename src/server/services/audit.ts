@@ -1,26 +1,26 @@
 /**
- * audit.ts — Sistema de trazabilidad / auditoría de eventos.
+ * Internal implementation detail.
  *
- * Registra en memoria todas las acciones relevantes de la aplicación:
- *   - Intentos de login (éxito, fallo, bloqueo)
- *   - Creación/edición/eliminación de reportes
- *   - Creación/edición/eliminación de usuarios
- *   - Creación/edición/eliminación de clientes
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Límite: se mantienen los últimos AUDIT_LIMIT=1000 eventos (LIFO).
- * Los eventos se pierden al reiniciar el servidor (store en memoria).
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Para persistencia real en el futuro:
- *   - Reemplazar `auditStore` con llamadas a una base de datos (PostgreSQL, Firestore, etc.)
- *   - O exportar los eventos a Google Sheets usando el servicio googleSheets.ts
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * API pública:
- *   logAuditEvent(input)   — Registra un nuevo evento
- *   listAuditEvents(limit) — Devuelve los N más recientes (máx 1000)
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 import type { User } from '../auth';
 
-/** Tipos de acciones auditables en el sistema */
+/* Internal implementation detail. */
 export type AuditAction =
   | 'auth.login.success'
   | 'auth.login.failed'
@@ -36,33 +36,33 @@ export type AuditAction =
   | 'customer.update'
   | 'customer.delete';
 
-/** Estructura de un evento de auditoría */
+/* Internal implementation detail. */
 export interface AuditEvent {
-  id: string;                          // ID único generado automáticamente
+  id: string;                          // Automatically generated unique ID.
   timestamp: string;                   // ISO 8601
-  action: AuditAction;                 // Qué ocurrió
-  actorEmail?: string;                 // Quién lo hizo (undefined = sistema)
-  actorRole?: User['role'];            // Rol del actor
+  action: AuditAction;                 // What happened.
+  actorEmail?: string;                 // Actor (undefined = system).
+  actorRole?: User['role'];            // Actor role.
   targetType: 'auth' | 'report' | 'user' | 'customer'; // Entidad afectada
   targetId?: string;                   // ID de la entidad afectada
-  details?: Record<string, unknown>;   // Datos extra (dependientes de la acción)
+  details?: Record<string, unknown>;   // Additional action-specific data.
 }
 
-/** Store en memoria; se limpia al reiniciar el servidor */
+/* Internal implementation detail. */
 const auditStore: AuditEvent[] = [];
 
-/** Número máximo de eventos conservados en memoria */
+/* Internal implementation detail. */
 const AUDIT_LIMIT = 1000;
 
-/** Genera un ID único para cada evento de auditoría */
+/* Internal implementation detail. */
 function nextAuditId(): string {
   return `audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 /**
- * Registra un nuevo evento de auditoría.
- * Se inserta al inicio del array (más reciente primero).
- * Si se supera el límite, se trunca el array.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 export function logAuditEvent(input: Omit<AuditEvent, 'id' | 'timestamp'>): AuditEvent {
   const event: AuditEvent = {
@@ -71,17 +71,17 @@ export function logAuditEvent(input: Omit<AuditEvent, 'id' | 'timestamp'>): Audi
     ...input,
   };
 
-  auditStore.unshift(event); // insertar al inicio para mantener orden LIFO
+  auditStore.unshift(event); // Insert first to preserve LIFO order.
   if (auditStore.length > AUDIT_LIMIT) {
-    auditStore.length = AUDIT_LIMIT; // recortar al límite máximo
+    auditStore.length = AUDIT_LIMIT; // Trim to the maximum limit.
   }
 
   return event;
 }
 
 /**
- * Devuelve los N eventos más recientes del log de auditoría.
- * @param limit — Máximo de eventos a retornar (entre 1 y AUDIT_LIMIT)
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 export function listAuditEvents(limit = 200): AuditEvent[] {
   return auditStore.slice(0, Math.max(1, Math.min(limit, AUDIT_LIMIT)));

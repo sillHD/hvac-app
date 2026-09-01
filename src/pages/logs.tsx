@@ -1,16 +1,16 @@
 /**
- * logs.tsx — Página de logs de auditoría.
+ * Internal implementation detail.
  *
- * Muestra el historial de eventos de la aplicación en tiempo real.
- * Solo accesible por usuarios con rol 'admin' o 'root'.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Datos: GET /api/logs?limit=200
- * Cada entrada tiene el formato:
+ * Internal implementation detail.
+ * Internal implementation detail.
  *   TIMESTAMP | ACTION | actor=EMAIL (ROLE) | target=TYPE:ID | {details}
  *
- * NOTA: Los logs son en memoria y se pierden al reiniciar el servidor.
- * Para persistencia permanente, conectar el servicio audit.ts a Google Sheets
- * o a una base de datos.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 import React, { useEffect, useState } from 'react';
 import Protected from '../components/Protected';

@@ -1,22 +1,22 @@
 /**
- * Header.tsx — Barra de navegación principal de la aplicación.
+ * Internal implementation detail.
  *
  * Responsabilidades:
- *  - Mostrar el logo de ANC HVAC (vinculado a la home)
- *  - Renderizar los enlaces de navegación según el rol del usuario:
- *      - Todos:       Dashboard, Clientes, Nueva Factura, Nueva Cotización, Estado, Historial
- *      - admin/root:  + Logs de auditoría
- *      - root:        + Gestión de usuarios
- *  - Menú hamburguesa en móvil (toggle con estado `menuOpen`)
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *  - Selector de idioma ES/EN
- *  - Botón de Logout (llama a /api/auth/logout, borra token de localStorage)
+ * Internal implementation detail.
  *
  * Props:
- *  user    — Usuario autenticado o null
- *  loading — Si true, no muestra los enlaces (previene flash de navegación)
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * NOTA: La visibilidad por rol se controla en el componente directamente.
- * Si en el futuro necesitas agregar una nueva ruta protegida, añádela a la lista
+ * Internal implementation detail.
+ * Internal implementation detail.
  * correcta: commonLinks/adminLinks/rootLinks.
  */
 import Link from 'next/link';
@@ -36,7 +36,7 @@ export default function Header({ user, loading = false }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
-  const { locale, setLocale, t } = useI18n();
+  const { t } = useI18n();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
 
@@ -48,7 +48,7 @@ export default function Header({ user, loading = false }: HeaderProps) {
   const isActiveLink = (href: string) => {
     const path = router.pathname;
 
-    // Evita colisión: /reports NO debe activarse en /reports/status
+    // Internal implementation detail.
     if (href === '/reports') return path === '/reports';
     if (href === '/reports/status') {
       return path === '/reports/status' || path.startsWith('/reports/status/');
@@ -101,7 +101,7 @@ export default function Header({ user, loading = false }: HeaderProps) {
 
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');
-        window.location.assign('/login'); // una sola navegación
+        window.location.assign('/login'); // Navigate only once.
       }
     } finally {
       setLogoutLoading(false);
@@ -221,31 +221,6 @@ export default function Header({ user, loading = false }: HeaderProps) {
                     {link.label}
                   </Link>
                 ))}
-              <div className="flex items-center gap-1 px-2 py-1">
-                <span className="text-xs text-zinc-400">{t('ui.language')}</span>
-                <button
-                  type="button"
-                  onClick={() => setLocale('es')}
-                  className={`rounded-full px-2 py-0.5 text-xs border transition-colors ${
-                    locale === 'es'
-                      ? 'border-amber-400/70 text-amber-300 bg-amber-500/10'
-                      : 'border-zinc-700 text-zinc-400 hover:text-zinc-200'
-                  }`}
-                >
-                  {t('lang.es')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLocale('en')}
-                  className={`rounded-full px-2 py-0.5 text-xs border transition-colors ${
-                    locale === 'en'
-                      ? 'border-amber-400/70 text-amber-300 bg-amber-500/10'
-                      : 'border-zinc-700 text-zinc-400 hover:text-zinc-200'
-                  }`}
-                >
-                  {t('lang.en')}
-                </button>
-              </div>
               <button
                 type="button"
                 onClick={onClickLogout}
@@ -269,12 +244,12 @@ export default function Header({ user, loading = false }: HeaderProps) {
         </nav>
       </div>
 
-      {/* Reemplaza el onClick del botón/link "Salir" */}
+      {/* Internal implementation detail. */}
       {/* Antes: onClick={performLogout} */}
       {/* Ahora: */}
       {/* <button onClick={onClickLogout}>Salir</button> */}
 
-      {/* Modal inline de confirmación */}
+      {/* Internal implementation detail. */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl border border-amber-500/30 bg-zinc-900 text-zinc-100 p-5 shadow-2xl">

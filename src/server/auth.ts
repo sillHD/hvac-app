@@ -235,7 +235,7 @@ export async function createUser(input: {
     throw new Error('Technician name is required');
   }
   if (input.role === 'root') {
-    throw new Error('No se permite crear otro usuario root');
+    throw new Error('Creating another root user is not allowed');
   }
 
   await ensureUsersReady();
@@ -281,7 +281,7 @@ export async function updateUser(
     if (patch.role && patch.role !== 'root') throw new Error('Root role cannot be changed');
   }
   if (currentRole !== 'root' && patch.role === 'root') {
-    throw new Error('No se permite asignar el rol root');
+    throw new Error('Assigning the root role is not allowed');
   }
 
   const nextRole = patch.role ? mapUserRoleToStoreRole(patch.role) : current.role;

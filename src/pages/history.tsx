@@ -1,15 +1,15 @@
 /**
- * history.tsx — Historial de todos los trabajos del usuario.
+ * Internal implementation detail.
  *
- * Muestra tabla/lista de todos los reportes visibles para el usuario actual.
- * Permite editar y eliminar reportes según permisos:
- *  - admin/root: puede gestionar cualquier reporte
- *  - technician: solo puede gestionar sus propios reportes en estados
- *    'draft', 'submitted' o 'processing'
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ *    'draft', 'submitted', or 'processing'
  *
- * Verificación de permisos:
- *  canManage(job) — Función que combina rol, propiedad del reporte y estado.
- *                    Debe mantenerse en sincronía con la lógica del servidor
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *                    en api/reports/[id].ts.
  */
 import React, { useCallback, useEffect, useState } from 'react';

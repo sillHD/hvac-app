@@ -1,45 +1,45 @@
-# Deploy en Vercel (ANC HVAC)
+# Deploying to Vercel (ANC HVAC)
 
-## 1) Requisitos
-- Cuenta en Vercel
-- Repositorio en GitHub con este proyecto
-- Variables de entorno listas (ver `.env.example`)
+## 1) Requirements
+- Vercel account
+- GitHub repository containing this project
+- Environment variables ready (see `.env.example`)
 
-## 2) Crear proyecto en Vercel
-1. Entra a https://vercel.com/new
-2. Importa tu repositorio de GitHub
-3. Framework: Next.js (detecta automatico)
-4. Root Directory: `hvac-app` (si tu repo contiene carpetas adicionales)
+## 2) Create a Vercel project
+1. Visit https://vercel.com/new
+2. Import your GitHub repository
+3. Framework: Next.js (automatically detected)
+4. Root Directory: `hvac-app` (if the repository contains additional folders)
 5. Deploy
 
-## 3) Variables de entorno (obligatorias recomendadas)
-Configura en Vercel -> Project -> Settings -> Environment Variables:
+## 3) Environment variables (required/recommended)
+Configure these in Vercel: **Project → Settings → Environment Variables**:
 - `GOOGLE_SHEET_ID`
-- `GOOGLE_SERVICE_ACCOUNT_KEY` (JSON completo o string segura)
+- `GOOGLE_SERVICE_ACCOUNT_KEY` (complete JSON or secure string)
 
-Opcional:
+Optional:
 - `GOOGLE_SHEETS_API_KEY` (fallback)
 - `AI_PROVIDER`
-- Variables `GOOGLE_FORM_*` solo si usaras el puente legacy
+- `GOOGLE_FORM_*` variables only when using the legacy bridge
 
-## 4) Despliegue por CLI (alternativa)
-Desde `hvac-app`:
+## 4) CLI deployment (alternative)
+From `hvac-app`:
 1. `npx vercel login`
 2. `npx vercel`
 3. `npx vercel --prod`
 
-## 5) Verificar PWA e instalacion iPhone
-1. Abre la URL HTTPS de Vercel en Safari (iPhone)
-2. Compartir -> Anadir a pantalla de inicio
-3. Verifica que abre en modo app (sin barra de navegador)
+## 5) Verify PWA and iPhone installation
+1. Open the Vercel HTTPS URL in Safari on iPhone.
+2. Select **Share → Add to Home Screen**.
+3. Verify it opens in app mode, without the browser bar.
 
-## 6) Dominio empresarial (recomendado)
-- Vercel -> Settings -> Domains
-- Agrega subdominio (ejemplo: `app.tuempresa.com`)
-- Configura DNS y espera propagacion
+## 6) Business domain (recommended)
+- Vercel → Settings → Domains
+- Add a subdomain (for example, `app.yourcompany.com`)
+- Configure DNS and wait for propagation
 
-## 7) Checklist final
-- Build exitoso en Vercel
-- Login funcional
-- Escritura/lectura en Google Sheets OK
-- Instalacion en iPhone y Android verificada
+## 7) Final checklist
+- Successful Vercel build
+- Working sign-in
+- Google Sheets read/write working
+- iPhone and Android installation verified

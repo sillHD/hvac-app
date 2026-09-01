@@ -20,12 +20,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       ok: true,
       message:
-        'Recuperacion iniciada. En esta version de prueba, contacta al editor principal o usa las credenciales internas registradas.',
+        'Recovery started. In this prototype version, contact the project owner or use the registered internal credentials.',
     });
   }
 
   return res.status(200).json({
     ok: true,
-    message: 'Si el correo existe en el sistema, recibira instrucciones de recuperacion.',
+    message: 'If the email exists in the system, recovery instructions will be sent.',
   });
 }

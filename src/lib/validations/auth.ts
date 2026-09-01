@@ -1,12 +1,12 @@
 /**
- * validations/auth.ts — Validaciones del lado cliente para formularios de autenticación.
+ * Internal implementation detail.
  *
  * Funciones exportadas:
- *  validateEmail(email) — Verifica que el string tenga formato de email válido.
+ * Internal implementation detail.
  *
- * NOTA: Esta validación es solo para UX (feedback inmediato al usuario).
- * La validación real de credenciales ocurre en el servidor (server/auth.ts).
- * Nunca confiar solo en validaciones del lado cliente.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 
 // Client-side or shared validation for auth forms

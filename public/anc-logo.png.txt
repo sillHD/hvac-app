@@ -1,12 +1,12 @@
-Coloca aquí tu archivo real de logo con este nombre exacto:
+Place the actual logo file here with this exact name:
 
 anc-logo.png
 
-Ruta esperada:
+Expected path:
 public/anc-logo.png
 
-El código ya está configurado para mostrarlo en:
-- Login (arriba de "Acceso técnicos")
-- Header (esquina superior izquierda)
+The code is already configured to display it in:
+- Sign-in page (above "Technician Access")
+- Header (top-left corner)
 
-Puedes borrar este archivo .txt después de subir el PNG.
+You can delete this .txt file after uploading the PNG.

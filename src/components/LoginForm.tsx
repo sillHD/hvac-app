@@ -1,20 +1,20 @@
 /**
- * LoginForm.tsx — Formulario de inicio de sesión.
+ * Internal implementation detail.
  *
  * Props:
  *  onSuccess — Callback invocado al hacer login correctamente.
- *               El padre (login.tsx) usa esto para redirigir al dashboard.
+ * Internal implementation detail.
  *
  * Flujo:
- *  1. Usuario ingresa email + password y envió el formulario
- *  2. POST /api/auth/login con las credenciales
- *  3. Si éxito: guarda el token en localStorage y llama onSuccess()
- *  4. Si 429 (rate limit): muestra tiempo de espera en segundos
- *  5. Si 401: muestra mensaje de credenciales incorrectas
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Funcionalidad de recuperación de contraseña:
- *  Actualmente es un placeholder que muestra un mensaje genérico.
- *  En el futuro, conectar a un endpoint de reset de contraseña.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 import { FormEvent, useState } from 'react';
 import { useI18n } from '../i18n/I18nProvider';
@@ -56,7 +56,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           localStorage.setItem('token', data.token);
         }
 
-        // Redirección única al dashboard (sin bucle)
+        // Internal implementation detail.
         if (typeof window !== 'undefined') {
           window.location.assign('/dashboard');
           return;

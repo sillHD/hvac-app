@@ -1,13 +1,13 @@
 /**
- * DashboardCard.tsx — Tarjeta de navegación para el dashboard.
+ * Internal implementation detail.
  *
- * Componente básico que renderiza un link estilizado con:
- *  - href: destino del enlace
- *  - title: título principal (en gradiente dorado)
- *  - description: texto secundario opcional
- *  - icon: icono opcional (SVG, emoji, etc.)
+ * Internal implementation detail.
+ *  - href: link destination
+ * Internal implementation detail.
+ *  - description: optional secondary text
+ *  - icon: optional icon (SVG, emoji, etc.)
  *
- * Usado en dashboard.tsx para accesos rápidos a las funciones principales.
+ * Internal implementation detail.
  */
 import Link from 'next/link';
 import { ReactNode } from 'react';

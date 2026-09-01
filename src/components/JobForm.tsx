@@ -1,21 +1,21 @@
 /**
- * JobForm.tsx — Formulario de creación de invoices y quotes.
+ * Internal implementation detail.
  *
  * Props:
- *  onSuccess  — Callback al guardar correctamente el reporte
- *  mode       — 'invoice' (factura) | 'quote' (cotización). Default: 'invoice'
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Características:
- *  - Autocompletado de cliente: al seleccionar un cliente del dropdown, se llenan
- *    nombre, email, teléfono y dirección automáticamente.
- *  - Validación con Zod: los campos requeridos se validan antes de enviar.
- *  - Preview de dinero: los campos precio y depósito muestran el valor
- *    formateado en tiempo real (ej: "Monto actual: 150.00$").
- *  - UX móvil: botón de submit sticky en la parte inferior en pantallas pequeñas.
- *  - Envió: POST /api/reports/create con el token en Authorization.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ *    formatted in real time (for example, "Current amount: 150.00$").
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * NOTA: El campo technicianName se prerrellena con la info del usuario logueado.
- * Las fotos actualmente son URLs de texto libre (no subida de archivos).
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 import { useState, useEffect, FormEvent } from 'react';
 import { z } from 'zod';
@@ -266,12 +266,12 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
     }));
   }, [job.technicianId, job.technicianName, technicians]);
 
-  const serviceTypes = ['Install', 'Repair', 'Maintenance', 'Diagnóstico'];
+  const serviceTypes = ['Install', 'Repair', 'Maintenance', 'Diagnostics'];
   const serviceTypeLabel = (value: string) => {
     if (value === 'Install') return 'Install';
     if (value === 'Repair') return 'Repair';
     if (value === 'Maintenance') return 'Maintenance';
-    if (value === 'Diagnóstico') return t('form.jobType');
+    if (value === 'Diagnostics') return 'Diagnostics';
     return value;
   };
 
@@ -315,7 +315,7 @@ export default function JobForm({ onSuccess, mode = 'invoice' }: JobFormProps) {
         'message' in e &&
         (e as { message?: unknown }).message === 'taxes'
       ) {
-        formatted.taxes = 'Taxes % debe estar entre 0 y 100';
+        formatted.taxes = 'Tax percentage must be between 0 and 100';
       } else if (
         typeof e === 'object' &&
         e !== null &&

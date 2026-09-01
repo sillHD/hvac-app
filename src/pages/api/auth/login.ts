@@ -1,26 +1,26 @@
 /**
- * api/auth/login.ts — Endpoint de inicio de sesión.
+ * Internal implementation detail.
  *
- * Método: POST
+ * Internal implementation detail.
  * Body:   { email: string, password: string }
  *
  * Flujo:
- *  1. Verifica rate limit: si email o IP están bloqueados → 429 Too Many Requests
- *  2. Intenta autenticar con signIn()
- *  3. En fallo: registra el intento, activa alerta de correo si se alcanza el límite
- *  4. En éxito: limpia el rate limit y devuelve { token, user }
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Respuestas:
+ * Responses:
  *  200 — { token: string, user: User } — Login exitoso
  *  400 — Email o password faltante
  *  401 — Credenciales incorrectas
- *  405 — Método no permitido
- *  429 — Bloqueado por rate limit (incluye segundos restantes)
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
  * Seguridad:
  *  - Rate limiting por email e IP (ver authSecurity.ts)
- *  - Auditoría de todos los intentos (ver audit.ts)
- *  - Alerta al admin si se activa el bloqueo (ver securityAlerts.ts — DESACTIVADO)
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { signIn } from '../../../server/auth';

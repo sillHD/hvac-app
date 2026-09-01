@@ -1,20 +1,20 @@
 /**
- * api/admin/users.ts — Gestión de usuarios del sistema.
+ * Internal implementation detail.
  *
- * Métodos: GET, POST, PATCH, DELETE
- * Acceso: Usuarios con rol 'admin' o 'root'
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * GET              — Lista todos los usuarios gestionados
- * POST             — Crea usuario (body: { email, name?, role, password, disabled? })
- * PATCH            — Actualiza usuario (body: { id, email?, name?, role?, password?, disabled? })
- * DELETE ?id=xxx   — Elimina usuario por ID
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
  * Restricciones:
- *  - No se puede crear otro usuario 'root'
- *  - No se puede cambiar el rol de un usuario existente a 'root'
- *  - El usuario root no puede ser desactivado ni eliminado
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Todas las operaciones de escritura generan evento de auditoría.
+ * Internal implementation detail.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import {
@@ -54,7 +54,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (parsedRole === 'technician' && (!name || !String(name).trim())) {
       return res.status(400).json({ error: 'Technician name is required' });
     }
-    // Los admins solo pueden crear técnicos
+    // Internal implementation detail.
     if (!canCreateUserRole(actor.role, parsedRole)) {
       return res.status(403).json({ error: 'Admins can only create technician users' });
     }
@@ -87,7 +87,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: 'User id is required' });
     }
 
-    // Los admins solo pueden editar técnicos
+    // Internal implementation detail.
     if (isAdmin) {
       const allUsers = await listManagedUsers();
       const target = allUsers.find((u) => u.id === String(id));
@@ -102,7 +102,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       if (!roleCandidate) {
         return res.status(400).json({ error: 'Invalid role' });
       }
-      // Los admins no pueden ascender a nadie a admin
+      // Internal implementation detail.
       if (!canCreateUserRole(actor.role, roleCandidate)) {
         return res.status(403).json({ error: 'Admins can only assign the technician role' });
       }
@@ -149,7 +149,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: 'User id is required' });
     }
 
-    // Los admins solo pueden borrar técnicos
+    // Internal implementation detail.
     if (isAdmin) {
       const allUsers = await listManagedUsers();
       const target = allUsers.find((u) => u.id === id);

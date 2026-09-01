@@ -1,38 +1,38 @@
 /**
- * customers.ts — Servicio CRUD de clientes.
+ * Internal implementation detail.
  *
- * Mantiene un store en memoria de clientes inicializado con datos mock.
- * Todas las operaciones son síncronas.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * Para producción:
- *  - Reemplazar customerStore con lecturas/escrituras a Google Sheets o BD.
- *  - El formato de addresses usa array de strings (una dirección por elemento).
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  *
- * API pública:
- *  listCustomers(query?)  — Lista todos o filtra por texto libre
- *  createCustomer(input)  — Crea un nuevo cliente (email único)
- *  updateCustomer(id, p)  — Actualiza campos del cliente
- *  deleteCustomer(id)     — Elimina un cliente por ID
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ *  updateCustomer(id, p)  — Updates customer fields
+ * Internal implementation detail.
  */
 import { mockCustomers } from '../../lib/mocks';
 import type { Customer } from '../../lib/types';
 
-/** Store en memoria; inicializado desde mocks al arrancar el servidor */
+/* Internal implementation detail. */
 const customerStore: Customer[] = mockCustomers.map((c) => ({ ...c, addresses: [...(c.addresses || [])] }));
 
-/** Elimina espacios sobrantes de los campos de texto */
+/* Internal implementation detail. */
 function normalizeText(value: string): string {
   return value.trim();
 }
 
-/** Genera un ID único para un nuevo cliente */
+/* Internal implementation detail. */
 function nextCustomerId(): string {
   return `c${Date.now()}${Math.floor(Math.random() * 1000)}`;
 }
 
 /**
- * Lista clientes; si se pasa `query`, filtra por nombre, email, teléfono o dirección.
- * La búsqueda es case-insensitive y busca en todos los campos de texto.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 export function listCustomers(query?: string): Customer[] {
   const q = (query || '').trim().toLowerCase();
@@ -47,9 +47,9 @@ export function listCustomers(query?: string): Customer[] {
 }
 
 /**
- * Crea un nuevo cliente.
- * Requiere: name, email, phone. El email debe ser único en el store.
- * @throws Error si faltan campos o si el email ya existe.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 export function createCustomer(input: Customer): Customer {
   const name = normalizeText(input.name || '');
@@ -71,14 +71,14 @@ export function createCustomer(input: Customer): Customer {
     addresses: (input.addresses || []).map(normalizeText).filter(Boolean),
   };
 
-  customerStore.unshift(created); // insertar al inicio para mostrar el más reciente primero
+  customerStore.unshift(created); // Show the most recently created customer first.
   return created;
 }
 
 /**
- * Actualiza campos de un cliente existente.
- * No permite cambiar el id. El email debe seguir siendo único.
- * @returns El cliente actualizado, o null si no se encontró el ID.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 export function updateCustomer(id: string, patch: Partial<Customer>): Customer | null {
   const idx = customerStore.findIndex((c) => c.id === id);
@@ -88,7 +88,7 @@ export function updateCustomer(id: string, patch: Partial<Customer>): Customer |
   const nextEmail = patch.email ? normalizeText(patch.email).toLowerCase() : current.email;
   if (!nextEmail) throw new Error('Email is required');
 
-  // Verificar que el nuevo email no pertenezca a otro cliente
+  // Internal implementation detail.
   const duplicate = customerStore.some((c) => c.id !== id && c.email.toLowerCase() === nextEmail);
   if (duplicate) throw new Error('Customer email already exists');
 
@@ -107,8 +107,8 @@ export function updateCustomer(id: string, patch: Partial<Customer>): Customer |
 }
 
 /**
- * Elimina un cliente del store por su ID.
- * @returns true si fue eliminado, false si no se encontró.
+ * Internal implementation detail.
+ * Internal implementation detail.
  */
 export function deleteCustomer(id: string): boolean {
   const idx = customerStore.findIndex((c) => c.id === id);

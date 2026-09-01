@@ -1,16 +1,16 @@
 /**
- * api/auth/logout.ts — Endpoint de cierre de sesión.
+ * Internal implementation detail.
  *
- * Método: POST
+ * Internal implementation detail.
  *
- * Actualmente el token vive solo en localStorage del cliente.
- * Este endpoint existe para que el cliente lo llame antes de borrar el token,
- * permitiendo futuras implementaciones de invalidación de sesión en servidor
- * (lista negra de tokens, sesiones en BD, etc.).
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * Internal implementation detail.
+ * (token denylist, database sessions, and so on).
  *
- * Respuestas:
- *  200 — { message: 'Sesion cerrada correctamente' }
- *  405 — Método no permitido
+ * Responses:
+ *  200 — { message: 'Session closed successfully' }
+ * Internal implementation detail.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { invalidateUserSessions, type User } from '../../../server/auth';
@@ -35,7 +35,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     targetId: user.id,
   });
 
-  return res.status(200).json({ message: 'Sesion cerrada correctamente' });
+  return res.status(200).json({ message: 'Session closed successfully' });
 }
 
 export default withAuth(handler);
